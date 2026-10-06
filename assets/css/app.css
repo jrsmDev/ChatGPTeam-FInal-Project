@@ -1301,3 +1301,237 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .phone.dark .bottomnav.icon-only .navbtn{color:#c5bdad}
 .phone.dark .bottomnav.icon-only .navbtn.active,
 .phone.dark .bottomnav.icon-only .navbtn.post-button.active{color:#f3f0e7}
+
+/* ═══ Responsive scale polish: consistent tab padding + clean web view ═══ */
+.frame-inner{isolation:isolate}
+.screens{
+  display:block;
+  padding-bottom:0;
+  scroll-padding-top:12px;
+  scroll-padding-bottom:110px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+.screen{
+  width:100%;
+  max-width:560px;
+  margin:0 auto;
+  min-height:100%;
+  flex-shrink:0;
+}
+/* Standard portal padding: top clears statusbar, bottom clears floating capsule nav */
+#screen-dashboard,
+#screen-matches,
+#screen-details,
+#screen-applications,
+#screen-messages,
+#screen-post,
+#screen-profile,
+#screen-chat,
+#screen-notifications,
+#screen-settings,
+#screen-feed,
+#screen-editProfile,
+#screen-ojtLog,
+#screen-communityProfile{
+  padding:64px 20px 128px;
+}
+#screen-roleSelect,
+#screen-purposeSelect{
+  padding:64px 22px 48px;
+  max-width:560px;
+}
+/* Sticky dashboard header should dock to top of scroll area, not float with gap */
+#screen-dashboard .dash-header{
+  position:sticky;
+  top:0;
+  z-index:40;
+  margin:0 -20px 18px;
+  padding:10px 20px;
+  background:var(--canvas);
+  background:color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+/* Prevent horizontal overflow from cards, maps, filters */
+.screen img,.screen svg,.mapwrap,#realMap,#dashMap,#fullRealMap{max-width:100%}
+.rec-card,.match-card,.app-card,.message-card,.feed-card,.dash-community-card,
+.composer,.match-breakdown,.ojt-log-card,.settings-item,.community-profile-head,
+.community-profile-section{max-width:100%;overflow-wrap:anywhere}
+.filter-row,.map-card-actions,.community-profile-actions,.study-filter-selects{min-width:0}
+.searchbar input,.location-search-row input,.chat-input-row input,.comment-input-row input{min-width:0}
+.study-filter-selects{grid-template-columns:repeat(2,minmax(0,1fr))}
+#dashMap{height:200px}
+.mapwrap{height:264px}
+.chat-messages{min-height:220px;max-height:52vh}
+.feed-card-image{max-height:240px}
+/* Toast always sits above floating nav */
+.toast-container{bottom:92px;width:min(90%,340px)}
+
+/* Small phones: tighten without breaking layout */
+@media(max-width:360px){
+  #screen-dashboard,
+  #screen-matches,
+  #screen-details,
+  #screen-applications,
+  #screen-messages,
+  #screen-post,
+  #screen-profile,
+  #screen-chat,
+  #screen-notifications,
+  #screen-settings,
+  #screen-feed,
+  #screen-editProfile,
+  #screen-ojtLog,
+  #screen-communityProfile{padding:58px 14px 124px}
+  .study-filter-selects{grid-template-columns:minmax(0,1fr)}
+  #dashMap{height:180px}
+  .mapwrap{height:248px}
+  .bottomnav.icon-only{width:calc(100% - 24px)}
+}
+/* Full-bleed mobile web view: remove phone rounding, dock nav to viewport */
+@media(max-width:500px){
+  .frame-inner{border-radius:0}
+  .fullmap-overlay,.modal-overlay{border-radius:0}
+  .bottomnav.icon-only{
+    left:50%;
+    bottom:max(10px,env(safe-area-inset-bottom));
+    width:min(360px,calc(100% - 24px));
+  }
+}
+/* Tablet / desktop web view: slightly larger phone, taller maps, refined type */
+@media(min-width:700px){
+  .phone{
+    width:min(430px,94vw,calc(96dvh * 430 / 900));
+    aspect-ratio:430 / 900;
+  }
+  .screen{max-width:520px}
+  .scr-title{font-size:26px}
+  .section-label{font-size:18px}
+  #dashMap{height:230px}
+  .mapwrap{height:300px}
+  .feed-card-image{max-height:260px}
+  .chat-messages{max-height:46vh}
+}
+/* Large desktop: keep prototype centered but give it breathing room and crisper scale */
+@media(min-width:1100px){
+  body{
+    background:
+      radial-gradient(60% 50% at 20% 10%, rgba(255,255,255,.08), transparent 60%),
+      radial-gradient(100% 90% at 50% 0%, #44634b 0%, #263e2d 58%, #17271c 100%);
+  }
+  .phone{
+    width:min(440px,94vw,calc(94dvh * 440 / 900));
+  }
+  #screen-dashboard,
+  #screen-matches,
+  #screen-details,
+  #screen-applications,
+  #screen-messages,
+  #screen-post,
+  #screen-profile,
+  #screen-chat,
+  #screen-notifications,
+  #screen-settings,
+  #screen-feed,
+  #screen-editProfile,
+  #screen-ojtLog,
+  #screen-communityProfile{padding-left:22px;padding-right:22px}
+}
+
+/* ═══ Margin balance system: even vertical rhythm + symmetrical gutters ═══ */
+:root{--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px}
+/* Kill edge stacking: screen padding already provides outer space */
+.screen>*:first-child{margin-top:0}
+.screen>*:last-child{margin-bottom:0}
+/* Headings: one predictable rhythm everywhere */
+.scr-title{margin:0 0 var(--sp-3)}
+.section-label{margin:var(--sp-5) 0 var(--sp-2)}
+.section-title{margin:18px 0 var(--sp-2)}
+#screen-matches .scr-title{margin-bottom:var(--sp-3)}
+.matches-intro{margin:0 0 var(--sp-3)}
+.map-listings-title{margin:var(--sp-4) 0 var(--sp-2)}
+/* Dashboard hero stack: balanced 2 / 6 / 8 / 16 steps */
+.greeting-text{margin:0}
+.user-name{margin:2px 0 6px}
+.user-role-badge{margin:0 8px 8px 0}
+.user-location{margin:0 0 var(--sp-4)}
+.deadline-badge{margin:0 0 var(--sp-3)}
+.progress-ring-wrap{margin:0 0 var(--sp-2)}
+.ojt-progress-note{margin:6px 2px var(--sp-4)}
+/* Cards + lists: same 10px gap, no trailing margin */
+.stats-grid{margin:0 0 var(--sp-4);gap:10px}
+.rec-card,.match-card,.app-card,.message-card,.feed-card,.notif-card,.ojt-log-card,.dash-community-card{margin:0 0 10px}
+#dashList,.message-list,.notif-list,.feed-list,#matchList,#appList,#ojtLogList,#dashCommunity,#postCommunity{display:flex;flex-direction:column;gap:10px;margin:0}
+#dashList .rec-card,#matchList .match-card,#appList .app-card,.message-list .message-card,.notif-list .notif-card,.feed-list .feed-card,#dashCommunity .dash-community-card,#postCommunity .dash-community-card,#ojtLogList .ojt-log-card{margin:0}
+.rec-card h3,.match-card h3,.app-card h3{margin:0 0 3px}
+.rec-top{margin:0 0 6px}
+.rec-card .rec-meta,.match-card .meta{margin:0 0 10px}
+.rec-skills-list{margin:0 0 var(--sp-3)}
+.match-card .view-link{margin:10px 0 0}
+.doclist{margin:0 0 var(--sp-3)}
+.doclist .doc-card{margin:0 0 var(--sp-2)}
+.doclist .doc-card:last-child{margin-bottom:0}
+/* Controls: even 8 / 12 steps */
+.searchbar{margin:0 0 var(--sp-3)}
+.filter-row{margin:0 0 var(--sp-2)}
+#matchControls .searchbar{margin-bottom:var(--sp-3)}
+#matchControls .filter-row:last-child{margin-bottom:var(--sp-3)}
+.view-toggle{margin:0 0 var(--sp-3)}
+.study-filter-group{margin:0 0 var(--sp-3)}
+.study-filter-heading{margin:0 0 var(--sp-2)}
+.mapwrap{margin:0 0 var(--sp-3)}
+.map-caption{margin:var(--sp-2) 2px var(--sp-3)}
+.map-match-carousel{margin:0;padding-bottom:var(--sp-1)}
+.map-card-content h3{margin:0 0 var(--sp-1)}
+.map-card-actions{margin:9px 0 0}
+.match-breakdown{margin:0 0 var(--sp-4)}
+.bar-row{margin:0 0 var(--sp-3)}
+.bar-row:last-child{margin-bottom:0}
+.bar-row .lbl{margin:0 0 6px}
+/* Composer / profile / chat: symmetrical inner spacing */
+.composer{margin:0 0 var(--sp-3)}
+.composer-head{margin:0 0 var(--sp-3)}
+.composer-actions{margin:14px 0 0}
+.composer textarea{margin:0}
+.profile-head{margin:0 0 var(--sp-4)}
+.chat-header{margin:0 0 var(--sp-3);padding-bottom:14px}
+.chat-messages{margin:0 0 var(--sp-3)}
+.chat-input-row{margin:0;padding:12px 0 0}
+.feed-card-header{margin:0 0 var(--sp-2)}
+.feed-card-body{margin:0 0 var(--sp-2)}
+.feed-stats{margin:0 0 6px}
+.feed-card-actions{margin:8px 0 0}
+.dash-community-composer{margin:0 0 10px}
+.back-btn{margin:0 0 var(--sp-3)}
+.btn-secondary{margin:8px 0 0}
+.screen .btn-primary:first-of-type{margin-top:var(--sp-2)}
+.settings-group{margin:0 0 var(--sp-5)}
+.settings-group h3{margin:0 0 10px}
+.settings-item{margin:0 0 var(--sp-2)}
+.settings-item:last-child{margin-bottom:0}
+.profile-theme-row{margin-bottom:var(--sp-4)}
+.edit-form .field{margin:0 0 14px}
+.ojt-log-form{margin:0}
+.ojt-log-balance{margin:10px 0 0}
+.empty-state{margin:var(--sp-6) auto;padding:32px var(--sp-5)}
+.empty-state h3{margin:0 0 6px}
+.empty-state-icon{margin:0 0 var(--sp-4)}
+.role-header,.purpose-header{margin-bottom:10px}
+.role-header .brand-badge{margin-bottom:var(--sp-4)}
+.role-title,.purpose-title{margin:0 0 6px}
+.role-subtitle{margin:0 0 18px}
+.purpose-subtitle{margin:0 0 22px}
+.role-grid{margin:0 0 var(--sp-4)}
+.purpose-grid{margin:0 0 22px}
+.purpose-selected-badge{margin:0 0 18px}
+.step-indicator{margin:0 0 18px}
+.btn-back-text{margin:12px auto 0}
+.field{margin-bottom:18px}
+.field label{margin:0 0 var(--sp-2)}
+.chip{margin:0 6px var(--sp-2) 0}
+.rec-skills-list .chip,.community-profile-skills .chip{margin:0}
+/* Sticky header gutter must match screen gutter at every breakpoint */
+#screen-dashboard .dash-header{margin:0 -20px var(--sp-4);padding:10px var(--sp-5)}
+@media(max-width:360px){#screen-dashboard .dash-header{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}}
+@media(min-width:1100px){#screen-dashboard .dash-header{margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}}
