@@ -1543,3 +1543,38 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .purpose-grid.checklist .purpose-check{border-radius:8px}
 .purpose-grid.checklist .purpose-card.selected .purpose-check{border-color:var(--green);background:var(--green)}
 #purposeNextBtn:disabled{opacity:.5}
+
+/* ═══ Type scale clarity: 4 levels only, no more confusing sizes ═══ */
+/* L1 display: screen titles / hero names — serif, one size */
+.scr-title,.login-title,.purpose-title,.role-title{font-family:var(--serif);font-weight:700;line-height:1.15;letter-spacing:-.4px}
+.scr-title{font-size:24px}
+.login-title{font-size:26px}
+.purpose-title,.role-title{font-size:22px}
+.user-name{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1.15;letter-spacing:-.4px}
+.onboarding-heading{line-height:1.08;letter-spacing:-.6px}
+.login-tagline{line-height:1.1;letter-spacing:-.6px}
+/* L2 section: dashboard groups — serif, one size */
+.section-label{font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.3;letter-spacing:-.2px}
+/* L3 eyebrow: small grouping labels — sans uppercase, one size */
+.section-title{font-size:12px;font-weight:700;line-height:1.4;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.map-listings-title{font-size:13px;letter-spacing:0;text-transform:none;color:var(--ink)}
+.study-filter-heading strong,.map-search-label,.location-search-group>label,.range-slider-header label{font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+/* L4 body: cards + content — 14 title / 13 body / 12 meta */
+.rec-card h3,.match-card h3,.app-card h3,.message-top strong,.feed-card-header h4,.notif-content h4,.chat-header-info h3,.purpose-info h3,.role-info h3,.community-profile-section h3{font-size:14px;font-weight:700;line-height:1.35}
+.rec-card .rec-meta,.match-card .meta,.app-card .meta{font-size:12px;line-height:1.45}
+.sub,.login-desc,.purpose-subtitle,.role-subtitle,.matches-intro,.map-caption,.auth-demo-note{font-size:13px;line-height:1.55}
+.message-preview,.feed-card-body,.notif-content p,.chat-bubble,.comment-body p,.dash-community-body p,.community-profile-section>p,.ojt-log-card p{font-size:13px;line-height:1.5}
+.message-time,.feed-post-time,.feed-stats,.notif-time,.chat-bubble .time,.comment-body span,.dash-community-body span,.feed-who>span,.stat-label,.track-labels{font-size:11px;line-height:1.4}
+.purpose-info p,.role-info p{font-size:12px;line-height:1.45}
+.field label{font-size:12px}
+.field input,.field select,.edit-form .field input,.edit-form .field select,.searchbar input,.skill-select,.chat-input-row input,.comment-input-row input,.location-search-row input{font-size:14px}
+.btn-primary,.btn-secondary,.btn-google,.btn-login-option,.btn-continue{font-size:14px;font-weight:600;letter-spacing:0}
+.btn-back-text,.back-btn,.forgot-link-inline,.view-link,.rec-card .rec-link{font-size:13px}
+.chip,.program-tag,.badge,.doc-status,.user-role-badge,.deadline-badge,.follow-btn{font-size:11px;font-weight:600;letter-spacing:.1px}
+.stat-value{font-family:var(--sans);font-size:22px;font-weight:750;line-height:1.1;letter-spacing:-.5px}
+.progress-ring-label .ring-pct{font-family:var(--sans);font-size:20px;font-weight:750}
+@media(min-width:700px){
+  .scr-title{font-size:25px}
+  .user-name{font-size:25px}
+  .section-label{font-size:18px}
+}
