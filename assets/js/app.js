@@ -579,7 +579,7 @@ function applyFilters(){
   const list=getFiltered();
   if(!list.some(m=>m.id===selectedMapId)) selectedMapId=[...list].sort((a,b)=>b.overall-a.overall)[0]?.id||null;
   const searchInput=document.getElementById('searchInput');
-  ['mapSearchInput','fullmapSearchInput'].forEach(id=>{
+  ['mapSearchInput'].forEach(id=>{
     const input=document.getElementById(id);
     if(input&&searchInput&&input.value!==searchInput.value) input.value=searchInput.value;
   });

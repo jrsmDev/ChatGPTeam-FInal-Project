@@ -1596,11 +1596,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   box-shadow:none;
 }
 
-/* ═══ Full-map header: two rows so nothing overlaps ═══ */
-.fullmap-header{flex-wrap:wrap;gap:8px 10px}
+/* ═══ Full-map header: title row + filter icon only ═══ */
+.fullmap-header{flex-wrap:nowrap;gap:10px}
 .fullmap-header h3{flex:1;min-width:0}
 .fullmap-header .fullmap-close,.fullmap-header .fullmap-filter-toggle{flex:none}
-.fullmap-search{order:3;flex:1 1 100%;min-width:0}
 .fullmap-body .fullmap-zoom-label{position:absolute;z-index:6;right:14px;top:10px;bottom:auto;margin:0}
 @media(max-width:500px){
   #screen-dashboard .dash-header{top:0;margin-top:0}
