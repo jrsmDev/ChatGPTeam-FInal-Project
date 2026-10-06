@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternLink — Mobile Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div class="phone no-nav" id="phone">
+  <div class="dynamic-island"></div>
+  <div class="frame-inner">
+    <div class="statusbar light" id="statusbar">
+      <span>9:41</span>
+      <div class="status-icons"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx=".8"/><rect x="5" y="5.5" width="3" height="6.5" rx=".8"/><rect x="10" y="3" width="3" height="9" rx=".8"/><rect x="15" y="0" width="3" height="12" rx=".8"/></svg><svg viewBox="0 0 17 12"><path style="fill:none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M1.5 4.2a10 10 0 0 1 14 0M4 6.9a6.5 6.5 0 0 1 9 0M6.6 9.5a3 3 0 0 1 3.8 0"/></svg><svg viewBox="0 0 27 12"><rect style="fill:none" x=".5" y=".5" width="22" height="11" rx="3" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="17" height="8" rx="1.8"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".45"/></svg></div>
+    </div>
+    <div class="screens">
+      <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+      <!-- SCREEN 1: ONBOARDING -->
+      <section class="screen active" id="screen-onboarding" data-slide="0">
+        <div class="onboarding-bg"></div>
+        <div class="onboarding-content">
+          <div class="brand-badge"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div>
+          <div class="onboarding-slider" id="onboardingSlider">
+            <div class="onboarding-slide active" data-slide="0">
+              <h2 class="onboarding-heading">Your path to real opportunities</h2>
+              <p class="onboarding-sub">Find internships across every course and field, matched to your skills and goals.</p>
+            </div>
+            <div class="onboarding-slide" data-slide="1">
+              <h2 class="onboarding-heading">Connect with top companies</h2>
+              <p class="onboarding-sub">Discover opportunities from trusted companies and organizations in every industry.</p>
+            </div>
+            <div class="onboarding-slide" data-slide="2">
+              <h2 class="onboarding-heading">Grow your skills</h2>
+              <p class="onboarding-sub">Gain hands-on experience, build your professional skills, and take your next step.</p>
+            </div>
+          </div>
+          <div class="page-dots" id="onboardingDots">
+            <button class="dot active" aria-label="Go to slide 1" onclick="goToSlide(0)"></button>
+            <button class="dot" aria-label="Go to slide 2" onclick="goToSlide(1)"></button>
+            <button class="dot" aria-label="Go to slide 3" onclick="goToSlide(2)"></button>
+          </div>
+          <button class="btn-continue" id="onboardingBtn" onclick="onboardingNext()">Get started <span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></button>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: LOGIN OPTIONS -->
+      <section class="screen" id="screen-loginOptions">
+        <div class="login-options-bg"></div>
+        <div class="login-options-content">
+          <div class="login-options-hero">
+            <div class="brand-badge"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div>
+            <div class="login-tagline"><span class="green-accent">Link.</span><br>Learn.<br>Launch.</div>
+          </div>
+          <div class="login-options-bottom">
+            <div class="login-options-card">
+              <p class="login-options-subtitle">Login with endless opportunities and take the first steps for a career of a lifetime.</p>
+              <button class="btn-login-option" onclick="setAuthMode('login')"><span class="material-icons-outlined">email</span>Login with Email Address</button>
+              <button class="btn-login-option" onclick="setAuthMode('phone')"><span class="material-icons-outlined">phone</span>Login with Phone Number</button>
+            </div>
+            <p class="signup-link">You don't have an account? <a onclick="setAuthMode('signup')">Sign up</a></p>
+            <p class="terms-text">By signing up, you agree to our <a onclick="openModal('termsModal')">Terms</a>. See how we use your data in our <a onclick="openModal('privacyModal')">Privacy Policy</a>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: EMAIL LOGIN -->
+      <section class="screen" id="screen-login">
+        <div class="login-brand">
+          <img class="login-brand-logo" src="assets/images/internlink-logo.png" alt="InternLink">
+          <svg class="login-decoration" viewBox="0 0 170 170" aria-hidden="true">
+            <path class="login-branch" d="M157 4c-8 43-31 77-75 105"/>
+            <path d="M132 35c-16-3-25-14-27-30 17 3 27 13 27 30Z"/>
+            <path d="M116 58c-16-3-26-13-28-29 17 3 27 12 28 29Z"/>
+            <path d="M97 81c-16-3-26-13-28-29 17 3 27 12 28 29Z"/>
+            <path d="M127 51c5-15 18-22 35-21-6 16-18 23-35 21Z"/>
+            <path d="M108 73c5-15 18-22 35-21-6 16-18 23-35 21Z"/>
+          </svg>
+        </div>
+        <div class="login-form-area">
+          <h2 class="login-title" id="loginTitle">Welcome back</h2>
+          <p class="login-desc" id="loginDesc">Sign in to continue your internship journey.</p>
+          <form id="loginForm">
+            <div class="field"><label for="loginEmail">Email address</label><input id="loginEmail" type="email" autocomplete="email" placeholder="you@school.edu.ph" required></div>
+            <div class="field"><label for="loginPass">Password</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="Your password" minlength="6" required></div>
+            <div class="login-meta-row">
+              <label class="remember-me"><input type="checkbox" checked> Remember me</label>
+              <a class="forgot-link-inline" href="#" onclick="event.preventDefault();openModal('forgotModal')">Forgot Password?</a>
+            </div>
+            <button class="btn-primary" id="loginSubmit" type="submit">Log in</button>
+          </form>
+          <p class="auth-demo-note">Prototype demo only — no account will be created and no credentials are sent.</p>
+          <div class="divider">or</div>
+          <button class="btn-google" type="button" onclick="showToast('Google sign-in is not connected in this prototype.','info')">
+            <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <p class="signup-link login-signup">Don't have an account? <a onclick="setAuthMode('signup')">Sign up</a></p>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: ROLE SELECTION -->
+      <section class="screen" id="screen-roleSelect">
+        <div class="role-header"><div class="brand-badge sm"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div></div>
+        <div class="step-indicator"><span class="step-dot done"></span><span class="step-dot active"></span><span class="step-dot"></span></div>
+        <h2 class="role-title">Tell us who you are</h2>
+        <p class="role-subtitle">Select your role so we can personalize your experience and show you what matters most.</p>
+        <div class="role-grid">
+          <div class="role-card" data-role="student" onclick="selectRole('student',this)">
+            <div class="role-icon"><span class="material-icons-outlined">school</span></div>
+            <div class="role-info"><h3>I'm a student</h3><p>Looking for internships, OJT placements, or skill-building opportunities</p></div>
+            <div class="role-check"><span class="material-icons-outlined">check</span></div>
+          </div>
+          <div class="role-card" data-role="employer" onclick="selectRole('employer',this)">
+            <div class="role-icon"><span class="material-icons-outlined">business</span></div>
+            <div class="role-info"><h3>I'm an employer</h3><p>Hiring interns, managing placements, or posting openings for your company</p></div>
+            <div class="role-check"><span class="material-icons-outlined">check</span></div>
+          </div>
+          <div class="role-card" data-role="school" onclick="selectRole('school',this)">
+            <div class="role-icon"><span class="material-icons-outlined">account_balance</span></div>
+            <div class="role-info"><h3>I'm a school coordinator</h3><p>Managing student placements, tracking OJT progress, and partnering with companies</p></div>
+            <div class="role-check"><span class="material-icons-outlined">check</span></div>
+          </div>
+        </div>
+        <button class="btn-primary" id="roleNextBtn" disabled onclick="showScreen('purposeSelect')">Continue</button>
+        <button class="btn-back-text" onclick="showScreen('login')"><span class="material-icons-outlined">arrow_back</span> Back to login</button>
+      </section>
+
+      <!-- SCREEN 5: PURPOSE SELECTION -->
+      <section class="screen" id="screen-purposeSelect">
+        <div class="purpose-header"><div class="brand-badge sm"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div></div>
+        <div class="step-indicator"><span class="step-dot done"></span><span class="step-dot done"></span><span class="step-dot active"></span></div>
+        <div id="purposeBadge" class="purpose-selected-badge"><span class="material-icons-outlined">school</span><span id="purposeBadgeText">Student</span></div>
+        <h2 class="purpose-title" id="purposeTitle">What are you looking for?</h2>
+        <p class="purpose-subtitle" id="purposeSubtitle">Help us tailor your dashboard. You can always change this later.</p>
+        <div class="purpose-grid" id="purposeGrid"></div>
+        <button class="btn-primary" id="purposeNextBtn" disabled onclick="finishOnboarding()">Finish setup</button>
+        <button class="btn-back-text" onclick="showScreen('roleSelect')"><span class="material-icons-outlined">arrow_back</span> Change my role</button>
+      </section>
+
+      <!-- SCREEN: DASHBOARD -->
+      <section class="screen" id="screen-dashboard">
+        <div class="dash-header">
+          <div class="dash-header-left"><button class="dash-avatar" id="dashInitials" aria-label="Open profile" onclick="showScreen('profile')"><span class="material-icons-outlined" aria-hidden="true">person</span></button></div>
+          <div class="dash-logo"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div>
+          <button class="dash-notif" aria-label="Notifications" onclick="showScreen('notifications')"><span class="material-icons-outlined">notifications</span><span class="notif-dot"></span></button>
+        </div>
+        <p class="greeting-text">Hello,</p>
+        <h2 class="user-name" id="dashName">Juan Dela Cruz</h2>
+        <div class="user-role-badge" id="dashRoleBadge"><span class="material-icons-outlined">school</span><span id="dashRoleText">Student</span></div>
+        <div class="user-location"><span class="material-icons-outlined">location_on</span>Dasmariñas, Cavite</div>
+
+        <div class="deadline-badge student-only"><span class="material-icons-outlined">timer</span><span id="deadlineText">45 days until OJT deadline</span></div>
+
+        <div class="progress-ring-wrap student-only" id="ojtProgressWrap">
+          <div class="ojt-progress-heading">
+            <strong>OJT hour progress</strong>
+            <span>Approved hours count toward completion</span>
+          </div>
+          <div class="progress-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill" id="ojtRingFill" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9" role="progressbar" aria-label="Approved OJT hours" aria-valuemin="0" aria-valuemax="400" aria-valuenow="120"/>
+            </svg>
+            <div class="progress-ring-label">
+              <span class="ring-pct" id="ojtRingPct">0%</span>
+              <span class="ring-sub">approved</span>
+            </div>
+          </div>
+          <div class="progress-ring-info">
+            <div class="ring-stat"><span>Approved</span><strong id="ringApproved">120h</strong></div>
+            <div class="ring-stat"><span>Pending review</span><strong id="ringPending">8h</strong></div>
+            <div class="ring-stat"><span>Unlogged</span><strong id="ringRemaining">272h</strong></div>
+          </div>
+        </div>
+        <p class="ojt-progress-note student-only">Unlogged hours are the balance after approved and pending hours toward your requirement.</p>
+
+        <p class="section-label">Dashboard</p>
+        <div class="stats-grid" id="dashStats">
+          <div class="stat-card"><span class="stat-value">87%</span><span class="stat-label">Average Skill Match</span></div>
+          <div class="stat-card"><span class="stat-value">12</span><span class="stat-label">Nearby Matches</span></div>
+          <div class="stat-card"><span class="stat-value" id="dashHours">400</span><span class="stat-label">Required OJT Hours</span></div>
+          <div class="stat-card"><span class="stat-value" id="dashApps">30</span><span class="stat-label">Applications Submitted</span></div>
+        </div>
+        <p class="section-label">Proximity Map</p>
+        <div class="dash-map-wrap" role="button" tabindex="0" aria-label="Open full matches map" onclick="showScreen('matches')" onkeydown="if(event.key==='Enter')showScreen('matches')">
+          <div id="dashMap" aria-hidden="true"></div>
+          <div class="dash-map-cta"><span class="material-icons-outlined">open_in_full</span> View full map</div>
+        </div>
+        <p class="section-label" id="dashListTitle">Recommended</p>
+        <div id="dashList"></div>
+        <button class="btn-primary mt-8" onclick="showScreen('matches')">View all matches</button>
+        <button class="btn-secondary" onclick="showScreen('messages')">Open messages</button>
+        <button class="btn-secondary student-only" onclick="showScreen('ojtLog')">Log OJT hours</button>
+        <p class="section-label">Community</p>
+        <div class="dash-community-composer" onclick="showScreen('post')" role="button" tabindex="0" aria-label="Share an update" onkeydown="if(event.key==='Enter')showScreen('post')"><div class="message-avatar"><span class="material-icons-outlined" style="font-size:18px">edit_note</span></div><span>Share an update…</span><span class="material-icons-outlined">photo_camera</span></div>
+        <div id="dashCommunity"></div>
+        <button class="btn-secondary" onclick="showScreen('feed')">View community</button>
+      </section>
+
+      <!-- SCREEN: MATCHES -->
+      <section class="screen" id="screen-matches">
+        <h2 class="scr-title">Matched Internships</h2>
+        <p class="matches-intro">Opportunities for every student. Find a fit for your course, skills, and goals.</p>
+        <div class="view-toggle">
+          <button class="toggle-btn" data-view="list" onclick="setView('list',this)">List</button>
+          <button class="toggle-btn active" data-view="map" onclick="setView('map',this)">Map</button>
+        </div>
+        <div id="matchControls">
+          <div class="searchbar"><input id="searchInput" placeholder="Search role or company…" oninput="applyFilters()"></div>
+          <div class="filter-row">
+            <button class="chip-btn" data-group="dist" data-value="10" onclick="setFilter('dist',10,this)">10 km</button>
+            <button class="chip-btn active" data-group="dist" data-value="35" onclick="setFilter('dist',35,this)">35 km</button>
+            <button class="chip-btn" data-group="dist" data-value="50" onclick="setFilter('dist',50,this)">50 km</button>
+            <button class="chip-btn" data-group="dist" data-value="999" onclick="setFilter('dist',999,this)">Any distance</button>
+          </div>
+          <div class="filter-row">
+            <button class="chip-btn active" data-group="match" data-value="70" onclick="setFilter('match',70,this)">70%+</button>
+            <button class="chip-btn" data-group="match" data-value="85" onclick="setFilter('match',85,this)">85%+</button>
+            <button class="chip-btn" data-group="match" data-value="0" onclick="setFilter('match',0,this)">Any match</button>
+            <select id="skillFilter" class="skill-select" onchange="updateSkillFilter(this.value)"><option value="any">Any skill</option></select>
+          </div>
+          <div class="study-filter-group">
+            <div class="study-filter-heading"><strong>Filter by study program</strong><span>Choose a department, then your program</span></div>
+            <div class="study-filter-selects">
+              <select id="programFilter" class="skill-select" aria-label="Choose a department" onchange="updateProgramFilter(this.value)"><option value="any">Any department</option></select>
+              <select id="courseFilter" class="skill-select" aria-label="Choose a specific program" onchange="updateCourseFilter(this.value)" disabled><option value="any">Choose a department first</option></select>
+            </div>
+          </div>
+        </div>
+        <div id="matchListView" class="hidden">
+          <p class="section-title" id="listingsTitle">Listings</p>
+          <div id="matchList"></div>
+        </div>
+        <div id="matchMapView">
+          <div class="mapwrap" id="mapWrap">
+            <div class="map-tools">
+              <div class="map-location"><span class="material-icons-outlined">location_on</span><span id="mapLocationLabel">Dasmariñas, Cavite · 35 km radius</span></div>
+              <button class="map-filter-button" aria-label="Expand full map" onclick="openFullMap()"><span class="material-icons-outlined">open_in_full</span></button>
+              <button class="map-filter-button" aria-label="Show match filters" aria-expanded="false" onclick="toggleMapFilters(this)"><span class="material-icons-outlined">tune</span></button>
+            </div>
+            <div class="map-filter-panel" id="mapFilterPanel">
+              <label class="map-search-label" for="mapSearchInput">Search internships</label>
+              <div class="searchbar map-searchbar"><input id="mapSearchInput" placeholder="Search role or company…" oninput="document.getElementById('searchInput').value=this.value;applyFilters()"></div>
+              <form class="location-search-group" onsubmit="event.preventDefault();searchLocation()">
+                <label for="locationSearch">Search an area</label>
+                <div class="location-search-row">
+                  <input id="locationSearch" type="search" placeholder="City, barangay, or landmark" autocomplete="off">
+                  <button type="submit" id="locationSearchButton">Search</button>
+                </div>
+                <p id="locationSearchStatus" aria-live="polite"></p>
+              </form>
+              <div class="range-slider-container" style="border:none;padding:0;margin-bottom:10px">
+                <div class="range-slider-header"><label for="distanceRange">Search radius</label><span class="range-slider-value" id="rangeValue">35 km</span></div>
+                <input type="range" class="range-slider" id="distanceRange" min="1" max="50" value="35" step="1" oninput="updateDistanceRange(this.value)" aria-describedby="distanceRangeHelp">
+                <div class="range-slider-labels" id="distanceRangeHelp"><span>1 km</span><span>50 km</span></div>
+              </div>
+              <div class="filter-row">
+                <button class="chip-btn active" data-group="match" data-value="70" onclick="setFilter('match',70,this)">70%+</button>
+                <button class="chip-btn" data-group="match" data-value="85" onclick="setFilter('match',85,this)">85%+</button>
+                <button class="chip-btn" data-group="match" data-value="0" onclick="setFilter('match',0,this)">Any match</button>
+                <select id="mapSkillFilter" class="skill-select" onchange="updateSkillFilter(this.value)"><option value="any">Any skill</option></select>
+              </div>
+              <div class="study-filter-group map-study-filter">
+                <div class="study-filter-heading"><strong>Study program</strong><span>Choose department, then program</span></div>
+                <div class="study-filter-selects">
+                  <select id="mapProgramFilter" class="skill-select" aria-label="Choose a department" onchange="updateProgramFilter(this.value)"><option value="any">Any department</option></select>
+                  <select id="mapCourseFilter" class="skill-select" aria-label="Choose a specific program" onchange="updateCourseFilter(this.value)" disabled><option value="any">Choose a department first</option></select>
+                </div>
+              </div>
+            </div>
+            <div id="realMap" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()"></div>
+            <button class="map-locate-btn" aria-label="Use my location" onclick="event.stopPropagation();useMyLocation()"><span class="material-icons-outlined">my_location</span></button>
+            <div class="map-coords" id="mapCoords">Dasmariñas, Cavite (default)</div>
+            <div class="map-count" id="mapCount">5 matches nearby</div>
+            <div class="map-open-overlay"><span class="material-icons-outlined">open_in_full</span> Tap to expand</div>
+          </div>
+          <p class="section-title map-listings-title" id="mapListingsTitle">Selected internship</p>
+          <div class="map-match-carousel" id="mapMatchCarousel"></div>
+          <p class="sub map-caption" id="mapCaption">Select a map pin to preview its internship.</p>
+        </div>
+      </section>
+
+      <!-- SCREEN: DETAILS -->
+      <section class="screen" id="screen-details">
+        <button class="back-btn" id="detailsBackButton" onclick="returnFromDetails()"><span class="material-icons-outlined">arrow_back</span> Back</button>
+        <h2 class="scr-title" id="detTitle">Internship Details</h2>
+        <p class="sub mb-16" id="detMeta"></p>
+        <div class="match-breakdown">
+          <div class="bar-row"><div class="lbl"><span>Skill compatibility</span><span id="detSkillPct"></span></div><div class="bar-bg"><div class="bar-fill" id="detSkillBar"></div></div></div>
+          <div class="bar-row"><div class="lbl"><span>Geographic proximity</span><span id="detGeoPct"></span></div><div class="bar-bg"><div class="bar-fill" id="detGeoBar"></div></div></div>
+          <div class="bar-row"><div class="lbl"><span>Overall match</span><span id="detOverallPct"></span></div><div class="bar-bg"><div class="bar-fill" id="detOverallBar"></div></div></div>
+        </div>
+        <p class="section-title">Required skills</p>
+        <p class="sub mb-8" id="detFit"></p>
+        <div id="detSkills" class="mb-16"></div>
+        <p class="section-title">OJT details</p>
+        <p class="sub mb-24" id="detOjt"></p>
+        <button class="btn-primary" id="applyBtn" onclick="applyToCurrent()">Apply now</button>
+        <button class="btn-secondary" id="saveBtn" onclick="toggleSave()">Save for later</button>
+      </section>
+
+      <!-- SCREEN: APPLICATIONS -->
+      <section class="screen" id="screen-applications">
+        <h2 class="scr-title">My Applications</h2>
+        <p class="sub mb-16">Tap an application to review the role and your match.</p>
+        <div id="appList"></div>
+        
+        
+      </section>
+
+      <!-- SCREEN: MESSAGES -->
+      <section class="screen" id="screen-messages">
+        <h2 class="scr-title">Messages</h2>
+        <div class="searchbar"><input placeholder="Search chats…" aria-label="Search chats" oninput="msgQuery=this.value.toLowerCase();renderMessages()"></div>
+        <div class="message-list" id="messageList">
+          <div class="message-card unread">
+            <div class="message-avatar">GC</div>
+            <div class="message-content">
+              <div class="message-top"><strong>GCash</strong><span class="message-time">2m</span></div>
+              <div class="message-preview">Thanks for applying — we’d love to set up a quick intro call.</div>
+            </div>
+            <div class="message-pill">1</div>
+          </div>
+          <div class="message-card">
+            <div class="message-avatar">IB</div>
+            <div class="message-content">
+              <div class="message-top"><strong>IBM Philippines</strong><span class="message-time">1h</span></div>
+              <div class="message-preview">Your profile matches the AI/ML internship brief. Can you share your portfolio?</div>
+            </div>
+          </div>
+          <div class="message-card">
+            <div class="message-avatar">SM</div>
+            <div class="message-content">
+              <div class="message-top"><strong>SM Prime</strong><span class="message-time">Yesterday</span></div>
+              <div class="message-preview">We’ve reviewed your application and would like to schedule an interview.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: CREATE POST -->
+      <section class="screen" id="screen-post">
+        <h2 class="scr-title">Create post</h2>
+        <div class="composer">
+          <div class="composer-head">
+            <div class="avatar">JD</div>
+            <h3>Juan Dela Cruz</h3>
+          </div>
+          <textarea id="postText" maxlength="280" oninput="onPostInput(this)" placeholder="What are you looking for, sharing, or asking for help with?"></textarea>
+          <p class="sub" id="postCount" style="text-align:right;margin-top:6px">0 / 280</p>
+          <div id="postPhotoPreview"></div>
+          <div class="composer-actions">
+            <button class="ghost-action" type="button" onclick="handlePhotoUpload()"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">photo_camera</span>Add photo</button>
+            <button class="btn-primary" id="postBtn" type="button" disabled onclick="submitPost()">Post</button>
+          </div>
+        </div>
+        <p class="section-title">Recent from community</p>
+        <div id="postCommunity"></div>
+        <button class="btn-secondary" onclick="showScreen('feed')">View community</button>
+      </section>
+
+      <!-- SCREEN: PROFILE -->
+      <section class="screen" id="screen-profile">
+        <h2 class="scr-title">My Profile</h2>
+        <div class="profile-head">
+          <div class="avatar">JD</div>
+          <div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:2px">Juan Dela Cruz</h3>
+            <p class="meta" style="font-size:12px;color:var(--muted);margin-bottom:4px">BS Information Technology • 3rd Year</p>
+            <span class="verified"><span class="material-icons-outlined" style="font-size:14px">verified</span> Verified</span>
+          </div>
+        </div>
+        <div class="settings-item profile-theme-row"><div><div class="settings-item-label">Dark mode</div><div class="settings-item-sub">Easier on the eyes at night</div></div><button class="toggle-switch" id="profileThemeSwitch" onclick="toggleTheme()" aria-label="Toggle dark mode"></button></div>
+        <div class="match-breakdown"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span>80%</span></div><div class="bar-bg"><div class="bar-fill" style="width:80%"></div></div></div><p class="sub mt-8">Upload your school endorsement to reach 100%.</p></div>
+        <p class="section-title">Skills</p>
+        <div class="mb-16"><span class="chip">HTML / CSS</span><span class="chip">JavaScript</span><span class="chip">Git</span><span class="chip">UI / UX</span><span class="chip">Database</span></div>
+        <p class="section-title">Portfolio & documents</p>
+        <div class="doclist">
+          <div class="doc-card" onclick="handleDocUpload('resume')"><div>Resume / CV <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('portfolio')"><div>Project portfolio <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('endorsement')"><div>School endorsement <span class="doc-status uploaded">Ready</span></div><span class="material-icons-outlined">chevron_right</span></div>
+        </div>
+        <button class="btn-secondary mt-16" onclick="openEditProfile()">Edit profile</button>
+        <button class="btn-secondary" onclick="signOut()">Sign out</button>
+      </section>
+
+      <!-- SCREEN: COMMUNITY PROFILE -->
+      <section class="screen" id="screen-communityProfile">
+        <button class="back-btn" onclick="closeCommunityProfile()"><span class="material-icons-outlined">arrow_back</span> Back</button>
+        <div id="communityProfileContent"></div>
+      </section>
+
+      <!-- SCREEN: CHAT -->
+      <section class="screen" id="screen-chat">
+        <div class="chat-header">
+          <button class="back-btn" onclick="closeChat()"><span class="material-icons-outlined">arrow_back</span></button>
+          <div class="message-avatar" id="chatAvatar">GC</div>
+          <div class="chat-header-info"><h3 id="chatName">GCash</h3><p id="chatStatus">Usually replies within an hour</p></div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChatMessage()">
+          <button class="chat-send" onclick="sendChatMessage()" aria-label="Send message"><span class="material-icons-outlined">send</span></button>
+        </div>
+      </section>
+
+      <!-- SCREEN: NOTIFICATIONS -->
+      <section class="screen" id="screen-notifications">
+        <h2 class="scr-title">Notifications</h2>
+        <div class="notif-list" id="notifList"></div>
+      </section>
+
+      <!-- SCREEN: SETTINGS -->
+      <section class="screen" id="screen-settings">
+        <h2 class="scr-title">Settings</h2>
+        <div class="settings-group">
+          <h3>Preferences</h3>
+          <div class="settings-item"><div><div class="settings-item-label">Push notifications</div><div class="settings-item-sub">Get matched, application updates</div></div><button class="toggle-switch on" onclick="this.classList.toggle('on')" aria-label="Toggle push notifications"></button></div>
+          <div class="settings-item"><div><div class="settings-item-label">Email digest</div><div class="settings-item-sub">Weekly summary of matches</div></div><button class="toggle-switch" onclick="this.classList.toggle('on')" aria-label="Toggle email digest"></button></div>
+          <div class="settings-item"><div><div class="settings-item-label">Location services</div><div class="settings-item-sub">For distance-based matching</div></div><button class="toggle-switch on" onclick="this.classList.toggle('on')" aria-label="Toggle location services"></button></div>
+        </div>
+        <div class="settings-group">
+          <h3>Account</h3>
+          <div class="settings-item" onclick="showToast('Change email coming soon','info')"><div><div class="settings-item-label">Email</div><div class="settings-item-sub">juan.delacruz@gmail.com</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+          <div class="settings-item" onclick="showToast('Change password coming soon','info')"><div><div class="settings-item-label">Password</div><div class="settings-item-sub">Last changed 3 months ago</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+          <div class="settings-item" onclick="showToast('Language: English','info')"><div><div class="settings-item-label">Language</div><div class="settings-item-sub">English</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+        </div>
+        <div class="settings-group">
+          <h3>Support</h3>
+          <div class="settings-item" onclick="showToast('Help center coming soon','info')"><div><div class="settings-item-label">Help center</div><div class="settings-item-sub">FAQs and guides</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+          <div class="settings-item" onclick="showToast('Privacy policy coming soon','info')"><div><div class="settings-item-label">Privacy policy</div><div class="settings-item-sub">How we use your data</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+        </div>
+        <button class="btn-secondary" onclick="signOut()">Sign out</button>
+      </section>
+
+      <!-- SCREEN: FEED -->
+      <section class="screen" id="screen-feed">
+        <h2 class="scr-title">Community Feed</h2>
+        <div class="feed-list" id="feedList"></div>
+      </section>
+
+      <!-- SCREEN: EDIT PROFILE -->
+      <section class="screen" id="screen-editProfile">
+        <button class="back-btn" onclick="showScreen('profile')"><span class="material-icons-outlined">arrow_back</span> Back</button>
+        <h2 class="scr-title">Edit Profile</h2>
+        <div class="edit-form">
+          <div class="field"><label>Full name</label><input id="editName" value="Juan Dela Cruz"></div>
+          <div class="field"><label>Course / Program</label><input id="editCourse" value="BS Information Technology"></div>
+          <div class="field"><label>Year level</label><select id="editYear"><option>1st Year</option><option>2nd Year</option><option selected>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
+          <div class="field"><label>School</label><input id="editSchool" value="De La Salle University - Dasmariñas"></div>
+          <div class="field"><label>Location</label><input id="editLocation" value="Dasmariñas, Cavite"></div>
+          <div class="field"><label>Bio</label><input id="editBio" value="Aspiring web developer with a passion for UI/UX and clean code."></div>
+          <div class="field"><label>Skills (comma-separated)</label><input id="editSkills" value="HTML / CSS, JavaScript, Git, UI / UX, Database"></div>
+          <button class="btn-primary" onclick="saveProfile()">Save changes</button>
+        </div>
+      </section>
+
+      <!-- SCREEN: OJT LOG -->
+      <section class="screen" id="screen-ojtLog">
+        <button class="back-btn" onclick="showScreen('dashboard')"><span class="material-icons-outlined">arrow_back</span> Back</button>
+        <h2 class="scr-title">Log OJT Hours</h2>
+        <div class="ojt-log-card">
+          <h4>Current placement</h4>
+          <p>GCash — Frontend Developer Intern</p>
+          <div class="ojt-log-form">
+            <input type="number" id="ojtHoursInput" placeholder="Hours (e.g. 8)" min="1" max="24" step="1" inputmode="numeric" aria-label="OJT hours to log">
+            <button onclick="logOjtHours()">Log hours</button>
+          </div>
+          <p class="sub ojt-log-balance" id="ojtLogBalance"></p>
+        </div>
+        <p class="section-title">Recent logs</p>
+        <div id="ojtLogList"></div>
+      </section>
+
+    </div>
+
+    <nav class="bottomnav icon-only">
+      <button class="navbtn active" data-nav="dashboard" aria-label="Home"><div class="navbtn-indicator"></div><span class="material-icons-outlined">home</span></button>
+      <button class="navbtn" data-nav="matches" aria-label="Matches"><div class="navbtn-indicator"></div><span class="material-icons-outlined">search</span></button>
+      <button class="navbtn post-button" data-nav="post" aria-label="Create a post"><div class="navbtn-indicator"></div><span class="material-icons-outlined">add</span></button>
+      <button class="navbtn" data-nav="messages" aria-label="Messages"><div class="navbtn-indicator"></div><span class="material-icons-outlined">chat_bubble_outline</span></button>
+      <button class="navbtn" data-nav="profile" aria-label="Profile"><div class="navbtn-indicator"></div><span class="material-icons-outlined">person</span></button>
+    </nav>
+
+    <!-- FULL-SCREEN MAP OVERLAY -->
+    <div class="fullmap-overlay" id="fullmapOverlay" aria-hidden="true" inert>
+      <div class="fullmap-header">
+        <button class="fullmap-close" onclick="closeFullMap()" aria-label="Close map"><span class="material-icons-outlined">close</span></button>
+        <h3>Map View</h3>
+        <input class="fullmap-search" id="fullmapSearchInput" type="search" placeholder="Search internships…" aria-label="Search internships on map" oninput="document.getElementById('searchInput').value=this.value;applyFilters()">
+        <button class="fullmap-filter-toggle" aria-label="Show map filters" aria-expanded="false" onclick="toggleFullMapFilters(this)"><span class="material-icons-outlined">tune</span></button>
+        <span class="fullmap-zoom-label" id="fullmapZoomLabel">1.0x</span>
+      </div>
+      <div class="fullmap-body">
+        <div id="fullRealMap"></div>
+        <div class="fullmap-info" id="fullmapCount">5 matches</div>
+        <div class="fullmap-filter-panel" id="fullmapFilterPanel">
+          <div class="fullmap-filter-heading">
+            <strong>Filter opportunities</strong>
+            <button type="button" onclick="toggleFullMapFilters(document.querySelector('.fullmap-filter-toggle'))" aria-label="Close filters"><span class="material-icons-outlined">close</span></button>
+          </div>
+          <form class="location-search-group" onsubmit="event.preventDefault();searchLocation('fullmapLocationSearch')">
+            <label for="fullmapLocationSearch">Search an area</label>
+            <div class="location-search-row">
+              <input id="fullmapLocationSearch" type="search" placeholder="City, barangay, or landmark" autocomplete="off">
+              <button type="submit" id="fullmapLocationSearchButton">Search</button>
+            </div>
+            <p id="fullmapLocationSearchStatus" aria-live="polite"></p>
+          </form>
+          <div class="fullmap-range">
+            <div class="range-slider-header"><label for="fullmapDistanceRange">Search radius</label><span id="fullmapRangeValue">35 km</span></div>
+            <input type="range" class="range-slider" id="fullmapDistanceRange" min="1" max="50" value="35" step="1" oninput="updateDistanceRange(this.value)" aria-label="Search radius">
+          </div>
+          <div class="filter-row fullmap-distance-filters">
+            <button class="chip-btn" data-group="dist" data-value="10" onclick="setFilter('dist',10,this)">10 km</button>
+            <button class="chip-btn active" data-group="dist" data-value="35" onclick="setFilter('dist',35,this)">35 km</button>
+            <button class="chip-btn" data-group="dist" data-value="50" onclick="setFilter('dist',50,this)">50 km</button>
+            <button class="chip-btn" data-group="dist" data-value="999" onclick="setFilter('dist',999,this)">Any distance</button>
+          </div>
+          <div class="filter-row fullmap-match-filters">
+            <button class="chip-btn active" data-group="match" data-value="70" onclick="setFilter('match',70,this)">70%+</button>
+            <button class="chip-btn" data-group="match" data-value="85" onclick="setFilter('match',85,this)">85%+</button>
+            <button class="chip-btn" data-group="match" data-value="0" onclick="setFilter('match',0,this)">Any match</button>
+          </div>
+          <div class="fullmap-selects">
+            <select id="fullmapProgramFilter" class="skill-select" aria-label="Choose a department" onchange="updateProgramFilter(this.value)"><option value="any">Any department</option></select>
+            <select id="fullmapCourseFilter" class="skill-select" aria-label="Choose a specific program" onchange="updateCourseFilter(this.value)" disabled><option value="any">Choose a department first</option></select>
+            <select id="fullmapSkillFilter" class="skill-select" aria-label="Filter by skill" onchange="updateSkillFilter(this.value)"><option value="any">Any skill</option></select>
+          </div>
+          <p class="program-filter-note">Program options depend on the department you select.</p>
+        </div>
+        <div class="fullmap-selected-card" id="fullmapSelectedCard" role="region" aria-label="Internships in your search range. Swipe horizontally to browse." tabindex="0"></div>
+        <div class="fullmap-controls">
+          <button class="fullmap-ctrl-btn" onclick="fullmapZoomIn()" aria-label="Zoom in"><span class="material-icons-outlined">add</span></button>
+          <button class="fullmap-ctrl-btn" onclick="fullmapZoomOut()" aria-label="Zoom out"><span class="material-icons-outlined">remove</span></button>
+          <button class="fullmap-ctrl-btn" onclick="fullmapReset()" aria-label="Reset view"><span class="material-icons-outlined">my_location</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Forgot Password -->
+    <div class="modal-overlay" id="forgotModal" aria-hidden="true" inert>
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('forgotModal')" aria-label="Close"><span class="material-icons-outlined">close</span></button>
+        <h3>Reset password</h3>
+        <p>Enter your email address and we'll send you a link to reset your password.</p>
+        <div class="field"><label for="forgotEmail">Email address</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@school.edu.ph" required></div>
+        <button class="btn-primary" onclick="submitForgotPassword()">Send reset link</button>
+      </div>
+    </div>
+
+    <!-- MODAL: Terms -->
+    <div class="modal-overlay" id="termsModal" aria-hidden="true" inert>
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('termsModal')" aria-label="Close"><span class="material-icons-outlined">close</span></button>
+        <h3>Terms of Service</h3>
+        <p>By using InternLink, you agree to provide accurate information, maintain professional conduct with employers and partners, and use the platform solely for legitimate internship and OJT placement purposes. Misuse may result in account suspension.</p>
+        <button class="btn-primary" onclick="closeModal('termsModal')">I understand</button>
+      </div>
+    </div>
+
+    <!-- MODAL: Privacy -->
+    <div class="modal-overlay" id="privacyModal" aria-hidden="true" inert>
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal('privacyModal')" aria-label="Close"><span class="material-icons-outlined">close</span></button>
+        <h3>Privacy Policy</h3>
+        <p>We collect only the data necessary to match students with opportunities: your name, school, skills, and location. We never sell your data. You can request deletion of your account and all associated data at any time.</p>
+        <button class="btn-primary" onclick="closeModal('privacyModal')">I understand</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
