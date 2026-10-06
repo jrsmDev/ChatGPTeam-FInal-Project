@@ -82,7 +82,7 @@ const COMMUNITY_PROFILES={
 let filters={dist:35,match:70,skill:'any',program:'any',course:'any'};
 const DEFAULT_APPLICATIONS=[
   {matchId:'m1',company:'GCash',role:'Frontend Developer Intern',status:'review',label:'Under review',date:'Oct 3'},
-  {company:'Accenture',role:'UI/UX Design Intern',status:'interview',label:'Interview',date:'Oct 1'},
+  {matchId:'m2',company:'Accenture',role:'UI/UX Design Intern',status:'interview',label:'Interview',date:'Oct 1'},
   {matchId:'m5',company:'SM Prime',role:'IT Support Intern',status:'interview',label:'Interview',date:'Sept 29'}
 ];
 let applications=JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS));
@@ -592,17 +592,8 @@ function applyFilters(){
   });
   document.getElementById('matchList').innerHTML=list.length?list.map(matchCardHTML).join(''):'<p class="sub">No matches — try widening your filters.</p>';
   document.getElementById('listingsTitle').textContent='Listings ('+list.length+')';
-  document.getElementById('mapListingsTitle').textContent=selectedMapId?'Selected internship':'No selected internship';
   syncMapControls();
   document.getElementById('mapCount').textContent=list.length+' '+(list.length===1?'match':'matches')+' nearby';
-  // Render map listings chips (shows matches within current distance filter)
-  const mapListings=document.getElementById('mapListings');
-  if(!mapListings) return;
-  if(list.length===0){
-    mapListings.innerHTML='<span class="sub">No matches in range</span>';
-  }else{
-    mapListings.innerHTML=list.slice(0,8).map(m=>`<span class="chip" style="margin:2px 4px;">${m.company} – ${m.role}</span>`).join('');
-  }
   renderSelectedMapMatch();
   renderMap(list);
   const fullCount=document.getElementById('fullmapCount');
@@ -625,11 +616,13 @@ function selectedMapMatchHTML(m,isSelected=true){
 }
 function renderSelectedMapMatch(){
   const matches=getFiltered();
-  const match=matches.find(m=>m.id===selectedMapId)||null;
-  const markup=selectedMapMatchHTML(match);
   const card=document.getElementById('mapMatchCarousel');
   const fullCard=document.getElementById('fullmapSelectedCard');
-  if(card) card.innerHTML=markup;
+  if(card){
+    card.innerHTML=matches.length
+      ? matches.map(m=>selectedMapMatchHTML(m,m.id===selectedMapId)).join('')
+      : '<p class="sub map-empty-selection">No internships in this range. Try widening your radius.</p>';
+  }
   if(fullCard){
     fullCard.innerHTML=matches.length?matches.map(m=>selectedMapMatchHTML(m,m.id===selectedMapId)).join(''):'<p class="sub map-empty-selection">No nearby matches. Try widening your filters.</p>';
     if(!fullCard.dataset.carouselBound){
@@ -650,7 +643,7 @@ function renderSelectedMapMatch(){
     if(selectedCard) fullCard.scrollTop=selectedCard.offsetTop;
   }
   const title=document.getElementById('mapListingsTitle');
-  if(title) title.textContent=match?'Selected internship':'No selected internship';
+  if(title) title.textContent=matches.length?('Internships nearby ('+matches.length+')'):'No internships in range';
 }
 function openMapMatchDetails(id){
   const overlay=document.getElementById('fullmapOverlay');
@@ -706,6 +699,7 @@ function applyToCurrent(){
   const m=MATCHES.find(x=>x.id===currentMatchId);
   if(!m||applications.some(a=>a.matchId===m.id)) return;
   applications.unshift({matchId:m.id,company:m.company,role:m.role,status:'submitted',label:'Submitted',date:todayLabel(),coverLetter:''});
+  recordApplicationNotification(m);
   renderApplications();showToast('Application submitted to ' + m.company + '!', 'success');showScreen('applications');
 }
 function toggleSave(){
@@ -717,34 +711,32 @@ function toggleSave(){
 function openApplyModal(){
   const m=MATCHES.find(x=>x.id===currentMatchId);
   if(!m) return;
-  document.getElementById('applyModal').classList.add('open');
-  document.getElementById('applyModal').removeAttribute('aria-hidden');
-  document.getElementById('applyModal').setAttribute('inert','false');
-  // Auto-fill profile data
+  internLinkApp.overlays.setOpen('applyModal',true);
   const name=(profileSetup.name||'Juan Dela Cruz').trim();
-  const ini=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()||'JD';
   document.getElementById('modalName').textContent=name;
   document.getElementById('modalSchool').textContent=profileSetup.school||'De La Salle University - Dasmariñas';
   const skillsRaw=profileSetup.skills||'HTML / CSS, JavaScript, Git, UI / UX, Database';
   const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
   document.getElementById('modalSkills').textContent=skills.length?skills.join(', '):'No skills listed';
-  // Set current match for submission
+  const letter=document.getElementById('coverLetter');
+  if(letter){letter.value='';setTimeout(()=>letter.focus(),50)}
   currentMatchIdForApply=m.id;
 }
 
 function closeApplyModal(){
-  const modal=document.getElementById('applyModal');
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden','true');
-  modal.setAttribute('inert','true');
+  internLinkApp.overlays.setOpen('applyModal',false);
   currentMatchIdForApply=null;
 }
 
 function submitApplication(){
   const m=MATCHES.find(x=>x.id===currentMatchIdForApply);
   if(!m) return;
+  if(applications.some(a=>a.matchId===m.id)){
+    showToast('You already applied to this internship','info');
+    closeApplyModal();
+    return;
+  }
   const coverLetter=document.getElementById('coverLetter').value.trim();
-  // Save application with cover letter
   applications.unshift({
     matchId:m.id,
     company:m.company,
@@ -754,6 +746,7 @@ function submitApplication(){
     date:todayLabel(),
     coverLetter:coverLetter||''
   });
+  recordApplicationNotification(m);
   renderApplications();
   showToast('Application submitted to ' + m.company + '!', 'success');
   saveState();
@@ -886,7 +879,8 @@ function saveState() {
     const state = {
       selectedRole, selectedPurpose, profileSetup, isDemoAccount,
       applications, saved: [...saved], followed: [...followed],
-      pendingHours, approvedHours, ojtLogs, filters, userLocation
+      pendingHours, approvedHours, ojtLogs, filters, userLocation,
+      notifications: NOTIFICATIONS
     };
     localStorage.setItem('internlink_state_v2', JSON.stringify(state));
   } catch(e) {}
@@ -902,6 +896,7 @@ function loadState() {
     else if (state.selectedPurpose&&state.selectedPurpose.id) selectedPurpose = [{id:state.selectedPurpose.id,title:state.selectedPurpose.title}];
     if (typeof state.isDemoAccount==='boolean') isDemoAccount = state.isDemoAccount;
     if (state.applications) applications = state.applications;
+    if (Array.isArray(state.notifications)) NOTIFICATIONS = state.notifications;
     if (state.saved) saved = new Set(state.saved);
     if (state.followed) followed = new Set(state.followed);
     restoreFeed();
@@ -1161,15 +1156,53 @@ function sendChatMessage(){
 }
 
 /* ═══ Notifications ═══ */
-const NOTIFICATIONS=[
-  {icon:'work',color:'green',title:'New match found',desc:'GCash — Frontend Developer Intern (92% match)',time:'2m',unread:true},
-  {icon:'mail',color:'blue',title:'Application update',desc:'SM Prime moved your application to Interview stage',time:'1h',unread:true},
-  {icon:'event',color:'orange',title:'OJT deadline approaching',desc:'45 days remaining to complete your 400 hours',time:'3h',unread:false},
-  {icon:'thumb_up',color:'green',title:'Profile viewed',desc:'IBM Philippines viewed your profile',time:'Yesterday',unread:false},
-  {icon:'description',color:'blue',title:'Endorsement ready',desc:'Your school endorsement letter is ready for download',time:'2d',unread:false}
+const DEFAULT_NOTIFICATIONS=[
+  {id:'n-match-m1',icon:'work',color:'green',title:'New match found',desc:'GCash — Frontend Developer Intern (92% match)',time:'2m',unread:true,screen:'details',matchId:'m1'},
+  {id:'n-app-sm',icon:'mail',color:'blue',title:'Application update',desc:'SM Prime moved your application to Interview stage',time:'1h',unread:true,screen:'applications',matchId:'m5'},
+  {id:'n-ojt',icon:'event',color:'orange',title:'OJT deadline approaching',desc:'45 days remaining to complete your 400 hours',time:'3h',unread:false,screen:'ojtLog'},
+  {id:'n-view-ibm',icon:'thumb_up',color:'green',title:'Profile viewed',desc:'IBM Philippines viewed your profile',time:'Yesterday',unread:false,screen:'details',matchId:'m3'},
+  {id:'n-endorsement',icon:'description',color:'blue',title:'Endorsement ready',desc:'Your school endorsement letter is ready for download',time:'2d',unread:false,screen:'profile'}
 ];
+let NOTIFICATIONS=JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
+function updateNotifDot(){
+  const dot=document.querySelector('.dash-notif .notif-dot');
+  if(dot) dot.classList.toggle('hidden',!NOTIFICATIONS.some(n=>n.unread));
+}
+function recordApplicationNotification(m){
+  NOTIFICATIONS.unshift({
+    id:'n-apply-'+m.id+'-'+Date.now(),
+    icon:'send',
+    color:'green',
+    title:'Application submitted',
+    desc:m.role+' at '+m.company,
+    time:'Just now',
+    unread:true,
+    screen:'details',
+    matchId:m.id
+  });
+  updateNotifDot();
+  saveState();
+}
+function openNotification(id){
+  const n=NOTIFICATIONS.find(item=>item.id===id);
+  if(!n) return;
+  n.unread=false;
+  updateNotifDot();
+  saveState();
+  renderNotifications();
+  if(n.matchId&&MATCHES.some(m=>m.id===n.matchId)){
+    openDetails(n.matchId);
+    return;
+  }
+  showScreen(n.screen||'dashboard');
+}
 function renderNotifications(){
-  document.getElementById('notifList').innerHTML=NOTIFICATIONS.map(n=>'<div class="notif-card'+(n.unread?' unread':'')+'"><div class="notif-icon '+n.color+'"><span class="material-icons-outlined">'+n.icon+'</span></div><div class="notif-content"><h4>'+n.title+'</h4><p>'+n.desc+'</p></div><span class="notif-time">'+n.time+'</span></div>').join('');
+  const list=document.getElementById('notifList');
+  if(!list) return;
+  list.innerHTML=NOTIFICATIONS.length
+    ? NOTIFICATIONS.map(n=>'<button type="button" class="notif-card'+(n.unread?' unread':'')+'" onclick="openNotification(\''+n.id+'\')"><div class="notif-icon '+n.color+'"><span class="material-icons-outlined">'+n.icon+'</span></div><div class="notif-content"><h4>'+n.title+'</h4><p>'+n.desc+'</p></div><span class="notif-time">'+n.time+'</span></button>').join('')
+    : '<p class="sub">No notifications yet.</p>';
+  updateNotifDot();
 }
 
 /* ═══ Post Feed ═══ */
@@ -1366,7 +1399,11 @@ function restoreFeed(){
 }
 
 /* ═══ Edit Profile ═══ */
-function openEditProfile(){showScreen('editProfile')}
+function openEditProfile(){
+  const fields={editName:'name',editCourse:'program',editYear:'year',editSchool:'school',editLocation:'location',editBio:'bio',editSkills:'skills'};
+  Object.entries(fields).forEach(([id,key])=>{const input=document.getElementById(id);if(input)input.value=profileSetup[key]||''});
+  showScreen('editProfile');
+}
 function saveProfile(){
   const name=document.getElementById('editName').value.trim();
   if(!name){showToast('Name is required','error');return}
@@ -1377,11 +1414,11 @@ function saveProfile(){
   const bio=document.getElementById('editBio').value.trim();
   const skillsRaw=document.getElementById('editSkills').value;
   profileSetup.name=name;
-  if(course) profileSetup.program=course;
-  if(year) profileSetup.year=year;
-  if(school) profileSetup.school=school;
-  if(location) profileSetup.location=location;
-  if(bio) profileSetup.bio=bio;
+  profileSetup.program=course;
+  profileSetup.year=year;
+  profileSetup.school=school;
+  profileSetup.location=location;
+  profileSetup.bio=bio;
   profileSetup.skills=skillsRaw;
   saveState();
   applyProfileToUI();

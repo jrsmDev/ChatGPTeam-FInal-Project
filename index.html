@@ -321,12 +321,11 @@
             <button class="map-locate-btn" aria-label="Use my location" onclick="event.stopPropagation();useMyLocation()"><span class="material-icons-outlined">my_location</span></button>
             <div class="map-coords" id="mapCoords">Dasmariñas, Cavite (default)</div>
             <div class="map-count" id="mapCount">5 matches nearby</div>
-            <div class="map-listings" id="mapListings"></div>
             <div class="map-open-overlay"><span class="material-icons-outlined">open_in_full</span> Tap to expand</div>
           </div>
-          <p class="section-title map-listings-title" id="mapListingsTitle">Selected internship</p>
+          <p class="section-title map-listings-title" id="mapListingsTitle">Internships nearby</p>
           <div class="map-match-carousel" id="mapMatchCarousel"></div>
-          <p class="sub map-caption" id="mapCaption">Select a map pin to preview its internship.</p>
+          <p class="sub map-caption" id="mapCaption">Internships within your search radius. Select a pin to highlight one.</p>
         </div>
       </section>
 
@@ -347,28 +346,6 @@
         <p class="sub mb-24" id="detOjt">8 hours/day · School endorsement required. Location: </p>
         <button class="btn-primary" id="applyBtn" onclick="openApplyModal()">Apply now</button>
         <button class="btn-secondary" id="saveBtn" onclick="toggleSave()">Save for later</button>
-        <!-- Application Form Modal -->
-        <div class="modal-overlay" id="applyModal" aria-hidden="true" inert>
-          <div class="modal">
-            <button class="modal-close" onclick="closeApplyModal()" aria-label="Close"><span class="material-icons-outlined">close</span></button>
-            <h3 class="modal-title">Apply for Internship</h3>
-            <div class="modal-body">
-              <div class="summary-section">
-                <p class="modal-sub"><strong>Name:</strong> <span id="modalName"></span></p>
-                <p class="modal-sub"><strong>School:</strong> <span id="modalSchool"></span></p>
-                <p class="modal-sub"><strong>Skills:</strong> <span id="modalSkills"></span></p>
-              </div>
-              <div class="cover-letter-section">
-                <label for="coverLetter">Cover letter / message (optional)</label>
-                <textarea id="coverLetter" rows="4" placeholder="Tell them why you're a good fit..."></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-secondary" onclick="closeApplyModal()">Cancel</button>
-              <button class="btn-primary" onclick="submitApplication()">Submit Application</button>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- SCREEN: APPLICATIONS -->
@@ -609,6 +586,29 @@
           <button class="fullmap-ctrl-btn" onclick="fullmapZoomIn()" aria-label="Zoom in"><span class="material-icons-outlined">add</span></button>
           <button class="fullmap-ctrl-btn" onclick="fullmapZoomOut()" aria-label="Zoom out"><span class="material-icons-outlined">remove</span></button>
           <button class="fullmap-ctrl-btn" onclick="fullmapReset()" aria-label="Reset view"><span class="material-icons-outlined">my_location</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Apply for Internship -->
+    <div class="modal-overlay" id="applyModal" aria-hidden="true" inert onclick="if(event.target===this)closeApplyModal()">
+      <div class="modal apply-modal" onclick="event.stopPropagation()">
+        <button type="button" class="modal-close" onclick="closeApplyModal()" aria-label="Close"><span class="material-icons-outlined">close</span></button>
+        <h3 class="modal-title">Apply for Internship</h3>
+        <div class="modal-body">
+          <div class="summary-section">
+            <p class="modal-sub"><strong>Name:</strong> <span id="modalName"></span></p>
+            <p class="modal-sub"><strong>School:</strong> <span id="modalSchool"></span></p>
+            <p class="modal-sub"><strong>Skills:</strong> <span id="modalSkills"></span></p>
+          </div>
+          <div class="cover-letter-section">
+            <label for="coverLetter">Cover letter / message (optional)</label>
+            <textarea id="coverLetter" rows="4" placeholder="Tell them why you're a good fit..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeApplyModal()">Cancel</button>
+          <button type="button" class="btn-primary" onclick="submitApplication()">Submit Application</button>
         </div>
       </div>
     </div>
