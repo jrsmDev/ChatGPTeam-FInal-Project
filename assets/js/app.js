@@ -1122,7 +1122,9 @@ function openChat(name,returnScreen='messages'){
   const msgs=CHAT_HISTORY[name]||[];
   const box=document.getElementById('chatMessages');
   document.getElementById('chatInput').value='';
-  box.innerHTML=msgs.map(m=>'<div class="chat-bubble '+m.from+'">'+escapeHTML(m.text)+'<span class="time">'+m.time+'</span></div>').join('');
+  box.innerHTML=msgs.length
+    ? msgs.map(m=>'<div class="chat-bubble '+m.from+'">'+escapeHTML(m.text)+'<span class="time">'+escapeHTML(m.time)+'</span></div>').join('')
+    : '<div class="chat-empty-state"><span class="material-icons-outlined" aria-hidden="true">chat_bubble_outline</span><strong>Start the conversation</strong><span>Send '+escapeHTML(name)+' a message.</span></div>';
   box.scrollTop=box.scrollHeight;
   if(thread)thread.unread=0;
   showScreen('chat');
@@ -1139,6 +1141,7 @@ function sendChatMessage(){
   const thread=messageThreads.find(item=>item.name===recipient);
   if(thread){thread.preview=text;thread.time='Now'}
   const box=document.getElementById('chatMessages');
+  box.querySelector('.chat-empty-state')?.remove();
   box.insertAdjacentHTML('beforeend','<div class="chat-bubble me">'+escapeHTML(text)+'<span class="time">'+now+'</span></div>');
   box.scrollTop=box.scrollHeight;
   input.value='';

@@ -589,7 +589,11 @@ body{background:radial-gradient(120% 90% at 50% 0%,#2D5A3D 0%,#14281c 55%,#0c1a1
 .chat-header-info{flex:1}
 .chat-header-info h3{font-size:15px;font-weight:700}
 .chat-header-info p{font-size:12px;color:var(--muted)}
-.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:8px 0;margin-bottom:12px}
+.chat-messages{flex:1;min-height:0;max-height:none;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:8px 0;margin-bottom:12px}
+.chat-empty-state{margin:auto;max-width:240px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:var(--muted)}
+.chat-empty-state .material-icons-outlined{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:var(--sage-light);color:var(--green);font-size:22px}
+.chat-empty-state strong{color:var(--ink);font-size:14px}
+.chat-empty-state span:last-child{font-size:12px;line-height:1.5}
 .chat-bubble{max-width:78%;padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.45;position:relative}
 .chat-bubble.them{align-self:flex-start;background:var(--white);border:1px solid var(--line);border-bottom-left-radius:4px}
 .chat-bubble.me{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
@@ -1349,7 +1353,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #screen-messages,
 #screen-post,
 #screen-profile,
-#screen-chat,
 #screen-notifications,
 #screen-settings,
 #screen-feed,
@@ -1358,6 +1361,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #screen-communityProfile{
   padding:64px 20px 128px;
 }
+#screen-chat{height:100%;min-height:100%;padding:64px 20px 24px}
 #screen-roleSelect,
 #screen-purposeSelect{
   padding:64px 22px 48px;
@@ -1385,7 +1389,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .study-filter-selects{grid-template-columns:repeat(2,minmax(0,1fr))}
 #dashMap{height:200px}
 .mapwrap{height:264px}
-.chat-messages{min-height:220px;max-height:52vh}
+.chat-messages{min-height:0;max-height:none}
 .feed-card-image{max-height:240px}
 /* Toast always sits above floating nav */
 .toast-container{bottom:92px;width:min(90%,340px)}
@@ -1399,13 +1403,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   #screen-messages,
   #screen-post,
   #screen-profile,
-  #screen-chat,
   #screen-notifications,
   #screen-settings,
   #screen-feed,
   #screen-editProfile,
   #screen-ojtLog,
   #screen-communityProfile{padding:58px 14px 124px}
+  #screen-chat{padding:58px 14px 24px}
   .study-filter-selects{grid-template-columns:minmax(0,1fr)}
   #dashMap{height:180px}
   .mapwrap{height:248px}
@@ -1433,7 +1437,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   #dashMap{height:230px}
   .mapwrap{height:300px}
   .feed-card-image{max-height:260px}
-  .chat-messages{max-height:46vh}
+  .chat-messages{max-height:none}
 }
 /* Large desktop: keep prototype centered but give it breathing room and crisper scale */
 @media(min-width:1100px){
