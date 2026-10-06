@@ -152,7 +152,7 @@
         <div class="purpose-header"><div class="brand-badge sm"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div></div>
         <div class="step-indicator"><span class="step-dot done"></span><span class="step-dot done"></span><span class="step-dot done"></span></div>
         <div id="setupRoleBadge" class="purpose-selected-badge"><span class="material-icons-outlined">school</span><span id="setupRoleBadgeText">Student</span></div>
-        <h2 class="purpose-title">Set up your profile</h2>
+        <h2 class="purpose-title" id="setupTitle">Set up your profile</h2>
         <p class="purpose-subtitle" id="setupSubtitle">Add your details now, or save what you have and finish later.</p>
         <div class="match-breakdown setup-progress-card"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span id="setupProgressPct">0%</span></div><div class="bar-bg"><div class="bar-fill" id="setupProgressFill" style="width:0%"></div></div></div><p class="sub mt-8" id="setupProgressNote">Fill in what you can — every step counts.</p></div>
         <div class="edit-form">
@@ -232,14 +232,14 @@
           <div class="stat-card"><span class="stat-value" id="dashHours">400</span><span class="stat-label">Required OJT Hours</span></div>
           <div class="stat-card"><span class="stat-value" id="dashApps">0</span><span class="stat-label">Applications Submitted</span></div>
         </div>
-        <p class="section-label">Proximity Map</p>
-        <div class="dash-map-wrap" role="button" tabindex="0" aria-label="Open full matches map" onclick="showScreen('matches')" onkeydown="if(event.key==='Enter')showScreen('matches')">
+        <p class="section-label student-only">Proximity Map</p>
+        <div class="dash-map-wrap student-only" role="button" tabindex="0" aria-label="Open full matches map" onclick="showScreen('matches')" onkeydown="if(event.key==='Enter')showScreen('matches')">
           <div id="dashMap" aria-hidden="true"></div>
           <div class="dash-map-cta"><span class="material-icons-outlined">open_in_full</span> View full map</div>
         </div>
         <p class="section-label" id="dashListTitle">Recommended</p>
         <div id="dashList"></div>
-        <button class="btn-primary mt-8" onclick="showScreen('matches')">View all matches</button>
+        <button class="btn-primary mt-8 student-only" onclick="showScreen('matches')">View all matches</button>
         <button class="btn-secondary" onclick="showScreen('messages')">Open messages</button>
         <button class="btn-secondary student-only" onclick="showScreen('ojtLog')">Log OJT hours</button>
         <p class="section-label">Community</p>
@@ -252,6 +252,7 @@
       <section class="screen" id="screen-matches">
         <h2 class="scr-title">Matched Internships</h2>
         <p class="matches-intro">Opportunities for every student. Find a fit for your course, skills, and goals.</p>
+        <div id="roleWorkView" class="hidden" aria-live="polite"></div>
         <div class="view-toggle">
           <button class="toggle-btn" data-view="list" onclick="setView('list',this)">List</button>
           <button class="toggle-btn active" data-view="map" onclick="setView('map',this)">Map</button>
@@ -502,9 +503,9 @@
         <div class="edit-form">
           <div class="profile-photo-field"><div class="profile-photo-preview" id="editPhotoPreview" aria-hidden="true"></div><div class="profile-photo-copy"><strong>Profile photo</strong><span>Optional. Saved on this device.</span></div><button type="button" class="profile-photo-action" data-profile-photo-label onclick="chooseProfilePhoto()">Add photo</button></div>
           <div class="field"><label>Full name</label><input id="editName" placeholder="Your full name"></div>
-          <div class="field"><label>Course / Program</label><input id="editCourse" placeholder="e.g. BS Information Technology"></div>
-          <div class="field"><label>Year level</label><select id="editYear"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
-          <div class="field"><label>School</label><input id="editSchool" placeholder="Your school"></div>
+          <div class="field edit-academic-only"><label>Course / Program</label><input id="editCourse" placeholder="e.g. BS Information Technology"></div>
+          <div class="field edit-academic-only"><label>Year level</label><select id="editYear"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
+          <div class="field"><label id="editSchoolLabel">School</label><input id="editSchool" placeholder="Your school"></div>
           <div class="field"><label>Location</label><input id="editLocation" placeholder="City, Province"></div>
           <div class="field"><label>Bio</label><input id="editBio" placeholder="A short line about you"></div>
           <div class="field"><label>Skills (comma-separated)</label><input id="editSkills" placeholder="e.g. JavaScript, UI / UX, Git"></div>
@@ -533,7 +534,7 @@
 
     <nav class="bottomnav icon-only">
       <button class="navbtn active" data-nav="dashboard" aria-label="Home"><div class="navbtn-indicator"></div><span class="material-icons-outlined">home</span></button>
-      <button class="navbtn" data-nav="matches" aria-label="Matches"><div class="navbtn-indicator"></div><span class="material-icons-outlined">search</span></button>
+      <button class="navbtn" data-nav="matches" aria-label="Matches"><div class="navbtn-indicator"></div><span class="material-icons-outlined" id="roleWorkIcon">search</span></button>
       <button class="navbtn post-button" data-nav="post" aria-label="Create a post"><div class="navbtn-indicator"></div><span class="material-icons-outlined">add</span></button>
       <button class="navbtn" data-nav="messages" aria-label="Messages"><div class="navbtn-indicator"></div><span class="material-icons-outlined">chat_bubble_outline</span></button>
       <button class="navbtn" data-nav="profile" aria-label="Profile"><div class="navbtn-indicator"></div><span class="material-icons-outlined">person</span></button>

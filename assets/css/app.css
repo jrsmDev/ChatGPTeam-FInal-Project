@@ -591,6 +591,7 @@ body{background:radial-gradient(120% 90% at 50% 0%,#2D5A3D 0%,#14281c 55%,#0c1a1
   .frame-inner{border-radius:0}
   .dynamic-island,.statusbar{display:none}
 }
+
 .phone.no-nav .screens{padding-bottom:0;scroll-padding-bottom:0}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.screens{scroll-behavior:auto}}
 
@@ -1705,3 +1706,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   #screen-profileSetup{padding:24px 18px 36px}
   #screen-chat.active{padding:24px 18px calc(24px + env(safe-area-inset-bottom))}
 }
+
+/* Keep the login brand and form in normal flow so the title never collides with the logo. */
+#screen-login{height:auto;min-height:100%;overflow:hidden;background:#DCD9CF}
+#screen-login::before{display:none}
+#screen-login .login-brand{position:relative;inset:auto;z-index:1;flex:0 0 clamp(170px,24dvh,210px);width:100%;height:auto;align-items:flex-end;justify-content:center;padding:0 0 0;overflow:visible;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.05)),url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80') center 38%/cover}
+#screen-login .login-brand-logo{width:min(190px,58%);transform:translateY(12px)}
+#screen-login .login-form-area{position:relative;z-index:2;flex:1 0 auto;min-height:0;width:100%;margin:0;padding:30px 28px 32px;display:flex;flex-direction:column;justify-content:flex-start}
+#screen-login .login-title{margin:0 0 4px;line-height:1.15}
+#screen-login .login-desc{margin-bottom:18px}
+.phone.dark #screen-login{background:var(--canvas)}
+.phone.dark #screen-login::before{display:none}
+
+/* Non-student work tabs show candidate or placement records instead of internship maps. */
+#roleWorkView:not(.hidden){display:block}
+#screen-matches #roleWorkView .rec-card{margin-bottom:12px}
+#screen-matches #roleWorkView .rec-link{margin-top:8px}

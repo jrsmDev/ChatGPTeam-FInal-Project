@@ -991,6 +991,24 @@ updateDashboardForRole=function(){
     s[1].textContent=getFiltered().length;s[2].textContent=OJT_REQUIRED;s[3].textContent=applications.length;
   }
   document.querySelectorAll('.student-only').forEach(e=>e.classList.toggle('hidden',role!=='student'));
+  const workNav=document.getElementById('roleWorkIcon')?.closest('.navbtn');
+  if(workNav){
+    const labels={student:['Matches','search'],employer:['Candidates','groups'],school:['Placements','fact_check']};
+    const [label,icon]=labels[role]||labels.student;
+    workNav.setAttribute('aria-label',label);
+    document.getElementById('roleWorkIcon').textContent=icon;
+  }
+  const roleTitle=document.querySelector('#screen-matches .scr-title');
+  const roleIntro=document.querySelector('#screen-matches .matches-intro');
+  const roleWorkView=document.getElementById('roleWorkView');
+  const student=role==='student';
+  if(roleTitle) roleTitle.textContent=student?'Matched Internships':role==='employer'?'Candidate Directory':'Placement Reviews';
+  if(roleIntro) roleIntro.textContent=student?'Opportunities for every student. Find a fit for your course, skills, and goals.':role==='employer'?'Review student profiles whose skills align with your internship openings.':'Review placement requests, student hour logs, and company partnership documents.';
+  ['.view-toggle','#matchControls','#matchListView','#matchMapView'].forEach(sel=>{const el=document.querySelector('#screen-matches '+sel);if(el)el.classList.toggle('hidden',!student)});
+  if(roleWorkView){
+    roleWorkView.classList.toggle('hidden',student);
+    roleWorkView.innerHTML=student?'':(ROLE_LISTS[role]||[]).map((r,i)=>'<div class="rec-card" onclick="handleRoleCardAction(\''+(role==='employer'?'view':i===0?'endorse':i===1?'approve':'review')+'\')"><div class="rec-top"><h3>'+r.n+'</h3><span class="rec-score">'+r.tag+'</span></div><p class="rec-meta">'+r.sub+'</p><div class="rec-skills-list">'+r.chips.map(c=>'<span class="chip">'+c+'</span>').join('')+'</div><button class="rec-link" onclick="event.stopPropagation();handleRoleCardAction(\''+(role==='employer'?'view':i===0?'endorse':i===1?'approve':'review')+'\')">'+(role==='employer'?'View candidate':i===0?'Review endorsement':i===1?'Approve hours':'Review request')+'</button></div>').join('');
+  }
   document.getElementById('dashName').textContent=(profileSetup.name||'').trim()||(isDemoAccount?v.name:'New member');
   renderDashList();
 };
@@ -1403,6 +1421,7 @@ function restoreFeed(){
 
 /* ═══ Edit Profile ═══ */
 function openEditProfile(){
+  prepProfileSetup();
   const fields={editName:'name',editCourse:'program',editYear:'year',editSchool:'school',editLocation:'location',editBio:'bio',editSkills:'skills'};
   Object.entries(fields).forEach(([id,key])=>{const input=document.getElementById(id);if(input)input.value=profileSetup[key]||''});
   showScreen('editProfile');
@@ -1525,6 +1544,8 @@ function profileStrength(){
 function prepProfileSetup(){
   const role=selectedRole||'student';
   const cfg=PURPOSE_OPTIONS[role];
+  const setupTitle=document.getElementById('setupTitle');
+  if(setupTitle) setupTitle.textContent=role==='student'?'Set up your student profile':role==='employer'?'Set up your company profile':'Set up your coordinator profile';
   const badge=document.getElementById('setupRoleBadgeText');
   if(badge) badge.textContent=cfg?cfg.badgeText:role;
   const icon=document.querySelector('#setupRoleBadge .material-icons-outlined');
@@ -1533,6 +1554,11 @@ function prepProfileSetup(){
   document.querySelectorAll('.setup-academic-only').forEach(el=>el.style.display=academic?'':'none');
   const schoolLabel=document.getElementById('setupSchoolLabel');
   if(schoolLabel) schoolLabel.textContent=role==='employer'?'Company':role==='school'?'School':'School';
+  const setupSubtitle=document.getElementById('setupSubtitle');
+  if(setupSubtitle) setupSubtitle.textContent=role==='student'?'Add your education, skills, and resume to get better internship matches.':role==='employer'?'Add your company details and hiring profile so students can learn about your opportunities.':'Add your school and coordinator details to manage student placements and OJT reviews.';
+  const editSchoolLabel=document.getElementById('editSchoolLabel');
+  if(editSchoolLabel) editSchoolLabel.textContent=role==='employer'?'Company':role==='school'?'School':'School';
+  document.querySelectorAll('.edit-academic-only').forEach(el=>el.classList.toggle('hidden',role!=='student'));
   const deptSel=document.getElementById('setupDept');
   if(deptSel&&!deptSel.dataset.setupBound){
     deptSel.innerHTML='<option value="any">Select a department</option>'+PROGRAM_FIELDS.map(d=>'<option value="'+escapeHTML(d)+'">'+escapeHTML(d)+'</option>').join('');
@@ -1903,8 +1929,10 @@ class ScreenManager{
     if(name==='profile'){renderProfileStrength();applyProfileToUI()}
     if(name==='profileSetup'){prepProfileSetup()}
     if(name==='matches'){
-      mapRefit=true;
-      requestAnimationFrame(()=>{renderMap(getFiltered());try{if(miniMap){miniMap.invalidateSize();miniMap.setView([userLocation.lat,userLocation.lng],miniMap.getZoom())}}catch(e){}});
+      if((selectedRole||'student')==='student'){
+        mapRefit=true;
+        requestAnimationFrame(()=>{renderMap(getFiltered());try{if(miniMap){miniMap.invalidateSize();miniMap.setView([userLocation.lat,userLocation.lng],miniMap.getZoom())}}catch(e){}});
+      }else updateDashboardForRole();
     }
     if(name==='applications') renderApplications();
     if(name==='messages') renderMessages();
