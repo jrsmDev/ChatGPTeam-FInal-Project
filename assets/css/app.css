@@ -367,6 +367,18 @@ body{background:radial-gradient(120% 90% at 50% 0%,#2D5A3D 0%,#14281c 55%,#0c1a1
 #screen-profile{padding:60px 20px 20px}
 .profile-head{display:flex;gap:14px;align-items:center;margin-bottom:20px}
 .avatar{width:56px;height:56px;border-radius:16px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:20px;font-weight:700}
+.profile-avatar{position:relative;flex:none;padding:0;border:0;overflow:hidden;cursor:pointer}
+.profile-avatar-image,.profile-photo-image{display:block;width:100%;height:100%;object-fit:cover}
+.profile-avatar-initials{display:flex;width:100%;height:100%;align-items:center;justify-content:center}
+.profile-avatar-camera{position:absolute;right:-1px;bottom:-1px;width:22px;height:22px;display:grid;place-items:center;border:2px solid var(--ivory);border-radius:50%;background:var(--green-dark);color:#fff;font-size:12px}
+.profile-photo-link{display:block;margin-top:5px;padding:0;border:0;background:none;color:var(--green);font:600 11px/1.4 var(--sans);text-align:left;cursor:pointer}
+.profile-photo-field{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--white)}
+.profile-photo-preview{width:48px;height:48px;flex:none;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:var(--sage-light);color:var(--green)}
+.profile-photo-preview .material-icons-outlined{font-size:21px}
+.profile-photo-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.profile-photo-copy strong{font-size:13px;color:var(--ink)}
+.profile-photo-copy span{font-size:11px;line-height:1.4;color:var(--muted)}
+.profile-photo-action{flex:none;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--ivory);color:var(--green);font:600 12px/1.2 var(--sans);cursor:pointer}
 .verified{font-size:11px;color:var(--sage);font-weight:700;display:flex;align-items:center;gap:3px}
 .doclist .doc-card{display:flex;justify-content:space-between;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
 .doclist .doc-card:hover{box-shadow:var(--shadow-sm)}

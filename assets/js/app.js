@@ -918,7 +918,7 @@ function loadState() {
     }
     if(state.profileSetup&&typeof state.profileSetup==='object'){
       const ps=state.profileSetup;
-      profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...ps,docs:{resume:null,portfolio:null,endorsement:null,...(ps.docs||{})}};
+      profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...ps,docs:{resume:null,portfolio:null,endorsement:null,...(ps.docs||{})}};
     }
     
     return !!state.selectedRole;
@@ -1431,6 +1431,48 @@ function saveProfile(){
   showScreen('profile');
 }
 
+function chooseProfilePhoto(){
+  const input=document.getElementById('profilePhotoInput');
+  if(input){input.value='';input.click()}
+}
+function handleProfilePhotoChange(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  input.value='';
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+    showToast('Choose a JPG, PNG, or WebP image','error');
+    return;
+  }
+  if(file.size>8*1024*1024){
+    showToast('Choose an image smaller than 8 MB','error');
+    return;
+  }
+  const reader=new FileReader();
+  reader.onerror=()=>showToast('Could not read that image. Try another one.','error');
+  reader.onload=()=>{
+    const image=new Image();
+    image.onerror=()=>showToast('That image could not be opened. Try another one.','error');
+    image.onload=()=>{
+      const side=Math.min(image.naturalWidth,image.naturalHeight);
+      if(!side){showToast('That image has no usable photo data.','error');return}
+      const canvas=document.createElement('canvas');
+      canvas.width=320;canvas.height=320;
+      const context=canvas.getContext('2d');
+      if(!context){showToast('Photo editing is unavailable in this browser.','error');return}
+      context.fillStyle='#fff';context.fillRect(0,0,320,320);
+      context.drawImage(image,(image.naturalWidth-side)/2,(image.naturalHeight-side)/2,side,side,0,0,320,320);
+      try{
+        profileSetup.photo=canvas.toDataURL('image/jpeg',.84);
+        saveState();
+        renderProfilePhoto();
+        showToast('Profile photo updated','success');
+      }catch(e){showToast('Could not save that photo. Try a smaller image.','error')}
+    };
+    image.src=String(reader.result||'');
+  };
+  reader.readAsDataURL(file);
+}
+
 /* ═══ Document Upload ═══ */
 function handleDocUpload(type){
   const input=document.createElement('input');
@@ -1456,7 +1498,7 @@ function removeProfileDoc(type){
 }
 
 /* ═══ Profile Setup (onboarding: set up now or later) ═══ */
-let profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+let profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
 const SETUP_DOC_LABELS={resume:'Resume / CV',portfolio:'Project portfolio',endorsement:'School endorsement'};
 function setupSteps(){
   const academic=(selectedRole||'student')==='student';
@@ -1506,6 +1548,7 @@ function prepProfileSetup(){
   set('setupLocation',profileSetup.location);
   set('setupBio',profileSetup.bio);
   set('setupSkills',profileSetup.skills);
+  renderProfilePhoto();
   renderSetupSkillSuggest();
   renderSetupDocs();
   updateSetupProgressUI();
@@ -1720,15 +1763,43 @@ function renderProfileDocs(){
   });
 }
 function isProfileEmpty(){
-  return !(profileSetup.name||'').trim()&&!(profileSetup.school||'').trim()&&!(profileSetup.program||'').trim()&&!(profileSetup.year||'').trim()&&!(profileSetup.location||'').trim()&&!(profileSetup.bio||'').trim()&&!(profileSetup.skills||'').split(',').map(s=>s.trim()).filter(Boolean).length&&!profileSetup.docs.resume&&!profileSetup.docs.portfolio&&!profileSetup.docs.endorsement;
+  return !(profileSetup.name||'').trim()&&!(profileSetup.school||'').trim()&&!(profileSetup.program||'').trim()&&!(profileSetup.year||'').trim()&&!(profileSetup.location||'').trim()&&!(profileSetup.bio||'').trim()&&!(profileSetup.skills||'').split(',').map(s=>s.trim()).filter(Boolean).length&&!profileSetup.photo&&!profileSetup.docs.resume&&!profileSetup.docs.portfolio&&!profileSetup.docs.endorsement;
+}
+function renderProfilePhoto(){
+  const name=(profileSetup.name||'').trim()||(isDemoAccount?'Juan Dela Cruz':'');
+  const initials=name?name.split(' ').map(word=>word[0]).join('').slice(0,2).toUpperCase():'?';
+  const photo=typeof profileSetup.photo==='string'&&/^data:image\/jpeg;base64,[a-z\d+/]+=*$/i.test(profileSetup.photo)?profileSetup.photo:'';
+  const fill=(container,isAvatar=false)=>{
+    if(!container)return;
+    container.replaceChildren();
+    if(photo){
+      const image=document.createElement('img');
+      image.src=photo;image.alt=isAvatar?'Profile photo':'';
+      image.className=isAvatar?'profile-avatar-image':'profile-photo-image';
+      container.appendChild(image);
+    }else if(isAvatar){
+      const label=document.createElement('span');label.className='profile-avatar-initials';label.textContent=initials;container.appendChild(label);
+    }else{
+      const icon=document.createElement('span');icon.className='material-icons-outlined';icon.textContent='add_a_photo';container.appendChild(icon);
+    }
+    if(isAvatar){
+      const camera=document.createElement('span');camera.className='profile-avatar-camera material-icons-outlined';camera.setAttribute('aria-hidden','true');camera.textContent='photo_camera';container.appendChild(camera);
+    }
+  };
+  fill(document.getElementById('profileAvatar'),true);
+  fill(document.getElementById('setupPhotoPreview'));
+  fill(document.getElementById('editPhotoPreview'));
+  document.querySelectorAll('[data-profile-photo-label]').forEach(button=>{
+    button.textContent=photo?'Change photo':'Add photo';
+  });
+  const avatar=document.getElementById('profileAvatar');
+  if(avatar)avatar.setAttribute('aria-label',photo?'Change profile photo':'Add profile photo');
 }
 function applyProfileToUI(){
   const empty=isProfileEmpty()&&!isDemoAccount;
   const name=(profileSetup.name||'').trim()||(isDemoAccount?'Juan Dela Cruz':'');
   if(document.getElementById('dashName').textContent!==(name||'New member')) document.getElementById('dashName').textContent=name||'New member';
-  const ini=name?name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
-  const avatar=document.querySelector('#screen-profile .avatar');
-  if(avatar) avatar.textContent=ini;
+  renderProfilePhoto();
   const h3=document.querySelector('#screen-profile h3');
   if(h3) h3.textContent=name||'Not set up yet';
   const meta=document.querySelector('#screen-profile .meta');
@@ -1886,7 +1957,7 @@ class AuthController{
 function loginDemoJuan(){
   selectedRole='student';
   selectedPurpose=DEMO_JUAN_PURPOSES.map(p=>({...p}));
-  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...JSON.parse(JSON.stringify(DEMO_JUAN_PROFILE))};
+  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...JSON.parse(JSON.stringify(DEMO_JUAN_PROFILE))};
   isDemoAccount=true;
   applications=JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS));
   saved=new Set();followed=new Set();openThreads=new Set();
@@ -1907,7 +1978,8 @@ function loginDemoJuan(){
 function startNewAccount(mode){
   selectedRole=null;
   selectedPurpose=[];
-  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+  renderProfilePhoto();
   isDemoAccount=false;
   applications=[];saved=new Set();followed=new Set();openThreads=new Set();
   pendingHours=0;approvedHours=0;ojtLogs=[];
