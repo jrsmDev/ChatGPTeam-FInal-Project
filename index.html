@@ -161,16 +161,16 @@
             <div class="field"><label for="setupYear">Year level</label><select id="setupYear" onchange="onSetupFieldChanged()"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
           </div>
           <div class="field"><label for="setupLocation">Location</label><input id="setupLocation" placeholder="Dasmariñas, Cavite" oninput="onSetupFieldChanged()"></div>
-          <div class="field"><label for="setupBio">Bio</label><input id="setupBio" placeholder="Aspiring web developer with a passion for UI/UX." oninput="onSetupFieldChanged()"></div>
-          <div class="field"><label for="setupSkills">Skills (comma-separated)</label><input id="setupSkills" placeholder="JavaScript, UI / UX, Git" list="setupSkillsList" oninput="onSetupFieldChanged()"><datalist id="setupSkillsList"></datalist></div>
+          <div class="field"><label for="setupBio" id="setupBioLabel">Bio</label><input id="setupBio" placeholder="Aspiring web developer with a passion for UI/UX." oninput="onSetupFieldChanged()"></div>
+          <div class="field"><label for="setupSkills" id="setupSkillsLabel">Skills (comma-separated)</label><input id="setupSkills" placeholder="JavaScript, UI / UX, Git" list="setupSkillsList" oninput="onSetupFieldChanged()"><datalist id="setupSkillsList"></datalist></div>
           <div class="setup-suggest" id="setupSkillSuggest"></div>
         </div>
-        <p class="section-title">Portfolio &amp; documents</p>
+        <p class="section-title" id="setupDocsTitle">Portfolio &amp; documents</p>
         <p class="sub mb-8">Prototype demo — only the file name is saved on this device.</p>
         <div class="doclist" id="setupDocList">
-          <div class="doc-card" onclick="setupDocUpload('resume')"><div>Resume / CV <span class="doc-status pending" id="setupDocResume">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
-          <div class="doc-card" onclick="setupDocUpload('portfolio')"><div>Project portfolio <span class="doc-status pending" id="setupDocPortfolio">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
-          <div class="doc-card" onclick="setupDocUpload('endorsement')"><div>School endorsement <span class="doc-status pending" id="setupDocEndorsement">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+          <div class="doc-card" onclick="setupDocUpload('resume')"><div><span id="setupDocResumeLabel">Resume / CV</span> <span class="doc-status pending" id="setupDocResume">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+          <div class="doc-card" onclick="setupDocUpload('portfolio')"><div><span id="setupDocPortfolioLabel">Project portfolio</span> <span class="doc-status pending" id="setupDocPortfolio">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+          <div class="doc-card" onclick="setupDocUpload('endorsement')"><div><span id="setupDocEndorsementLabel">School endorsement</span> <span class="doc-status pending" id="setupDocEndorsement">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
         </div>
         <button class="btn-primary" id="setupSaveBtn" onclick="saveProfileSetup()">Save and continue</button>
         <button class="btn-secondary" id="setupLaterBtn" onclick="skipProfileSetup()">Set up later</button>
@@ -187,7 +187,7 @@
         <p class="greeting-text">Hello,</p>
         <h2 class="user-name" id="dashName">New member</h2>
         <div class="user-role-badge" id="dashRoleBadge"><span class="material-icons-outlined">school</span><span id="dashRoleText">Student</span></div>
-        <div class="user-location"><span class="material-icons-outlined">location_on</span>Dasmariñas, Cavite</div>
+        <div class="user-location" id="dashLocation"><span class="material-icons-outlined">location_on</span>Dasmariñas, Cavite</div>
 
         <div class="setup-nudge hidden" id="profileSetupNudge">
           <div class="setup-nudge-icon"><span class="material-icons-outlined">person_add</span></div>
@@ -421,13 +421,13 @@
         </div>
         <div class="settings-item profile-theme-row"><div><div class="settings-item-label">Dark mode</div><div class="settings-item-sub">Easier on the eyes at night</div></div><button class="toggle-switch" id="profileThemeSwitch" onclick="toggleTheme()" aria-label="Toggle dark mode"></button></div>
         <div class="match-breakdown"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span id="profileStrengthPct">0%</span></div><div class="bar-bg"><div class="bar-fill" id="profileStrengthBar" style="width:0%"></div></div></div><p class="sub mt-8" id="profileStrengthNote">Complete profile setup to build your strength.</p></div>
-        <p class="section-title">Skills</p>
+        <p class="section-title" id="profileSkillsTitle">Skills</p>
         <div class="mb-16"><span class="sub">No skills added yet — add them in profile setup.</span></div>
-        <p class="section-title">Portfolio & documents</p>
+        <p class="section-title" id="profileDocsTitle">Portfolio &amp; documents</p>
         <div class="doclist">
-          <div class="doc-card" onclick="handleDocUpload('resume')"><div>Resume / CV <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
-          <div class="doc-card" onclick="handleDocUpload('portfolio')"><div>Project portfolio <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
-          <div class="doc-card" onclick="handleDocUpload('endorsement')"><div>School endorsement <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('resume')"><div><span id="profileDocResumeLabel">Resume / CV</span> <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('portfolio')"><div><span id="profileDocPortfolioLabel">Project portfolio</span> <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('endorsement')"><div><span id="profileDocEndorsementLabel">School endorsement</span> <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
         </div>
         <button class="btn-secondary mt-16" onclick="openEditProfile()">Edit profile</button>
         <button class="btn-secondary" onclick="signOut()">Sign out</button>
@@ -503,8 +503,8 @@
           <div class="field edit-academic-only"><label>Year level</label><select id="editYear"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
           <div class="field"><label id="editSchoolLabel">School</label><input id="editSchool" placeholder="Your school"></div>
           <div class="field"><label>Location</label><input id="editLocation" placeholder="City, Province"></div>
-          <div class="field"><label>Bio</label><input id="editBio" placeholder="A short line about you"></div>
-          <div class="field"><label>Skills (comma-separated)</label><input id="editSkills" placeholder="e.g. JavaScript, UI / UX, Git"></div>
+          <div class="field"><label id="editBioLabel">Bio</label><input id="editBio" placeholder="A short line about you"></div>
+          <div class="field"><label id="editSkillsLabel">Skills (comma-separated)</label><input id="editSkills" placeholder="e.g. JavaScript, UI / UX, Git"></div>
           <button class="btn-primary" onclick="saveProfile()">Save changes</button>
         </div>
       </section>

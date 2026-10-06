@@ -1009,7 +1009,13 @@ updateDashboardForRole=function(){
     roleWorkView.classList.toggle('hidden',student);
     roleWorkView.innerHTML=student?'':(ROLE_LISTS[role]||[]).map((r,i)=>'<div class="rec-card" onclick="handleRoleCardAction(\''+(role==='employer'?'view':i===0?'endorse':i===1?'approve':'review')+'\')"><div class="rec-top"><h3>'+r.n+'</h3><span class="rec-score">'+r.tag+'</span></div><p class="rec-meta">'+r.sub+'</p><div class="rec-skills-list">'+r.chips.map(c=>'<span class="chip">'+c+'</span>').join('')+'</div><button class="rec-link" onclick="event.stopPropagation();handleRoleCardAction(\''+(role==='employer'?'view':i===0?'endorse':i===1?'approve':'review')+'\')">'+(role==='employer'?'View candidate':i===0?'Review endorsement':i===1?'Approve hours':'Review request')+'</button></div>').join('');
   }
-  document.getElementById('dashName').textContent=(profileSetup.name||'').trim()||(isDemoAccount?v.name:'New member');
+  document.getElementById('dashName').textContent=(profileSetup.name||'').trim()||(isDemoAccount?v.name:role==='employer'?'New employer':role==='school'?'School coordinator':'New student');
+  const location=document.getElementById('dashLocation');
+  if(location){
+    const value=(profileSetup.location||'').trim()||(role==='student'?'Dasmariñas, Cavite':'');
+    location.classList.toggle('hidden',!value);
+    location.innerHTML=value?'<span class="material-icons-outlined">location_on</span>'+escapeHTML(value):'';
+  }
   renderDashList();
 };
 
@@ -1518,12 +1524,45 @@ function removeProfileDoc(type){
 
 /* ═══ Profile Setup (onboarding: set up now or later) ═══ */
 let profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
-const SETUP_DOC_LABELS={resume:'Resume / CV',portfolio:'Project portfolio',endorsement:'School endorsement'};
+function profileDocLabels(role=selectedRole||'student'){
+  if(role==='employer') return {resume:'Company profile',portfolio:'Work samples',endorsement:'Business registration'};
+  if(role==='school') return {resume:'Coordinator profile',portfolio:'OJT documents',endorsement:'School authorization'};
+  return {resume:'Resume / CV',portfolio:'Project portfolio',endorsement:'School endorsement'};
+}
+function applyRoleProfileLabels(){
+  const role=selectedRole||'student',employer=role==='employer',school=role==='school';
+  const organizationLabel=employer?'Company':'School';
+  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  const setPlaceholder=(id,value)=>{const el=document.getElementById(id);if(el)el.placeholder=value};
+  setText('setupSchoolLabel',organizationLabel);setText('editSchoolLabel',organizationLabel);
+  setPlaceholder('setupSchool',employer?'Company name':school?'School name':'De La Salle University - Dasmariñas');
+  setPlaceholder('editSchool',employer?'Company name':school?'School name':'Your school');
+  setText('setupBioLabel',employer?'Company overview':school?'Coordinator bio':'Bio');
+  setText('editBioLabel',employer?'Company overview':school?'Coordinator bio':'Bio');
+  setPlaceholder('setupBio',employer?'Describe your organization and internship opportunities':school?'Describe your coordinator role and placement support':'Aspiring web developer with a passion for UI/UX.');
+  setPlaceholder('editBio',employer?'Describe your company and opportunities':school?'Describe your coordinator role':'A short line about you');
+  setText('setupSkillsLabel',employer?'Hiring areas (comma-separated)':school?'Areas of coordination (comma-separated)':'Skills (comma-separated)');
+  setText('editSkillsLabel',employer?'Hiring areas (comma-separated)':school?'Areas of coordination (comma-separated)':'Skills (comma-separated)');
+  setPlaceholder('setupSkills',employer?'e.g. Software, Marketing, Engineering':school?'e.g. OJT advising, placement coordination':'JavaScript, UI / UX, Git');
+  setPlaceholder('editSkills',employer?'e.g. Software, Marketing, Engineering':school?'e.g. OJT advising, placement coordination':'e.g. JavaScript, UI / UX, Git');
+  setText('profileSkillsTitle',employer?'Hiring areas':school?'Coordination areas':'Skills');
+  setText('profileDocsTitle',employer?'Company documents':school?'School documents':'Portfolio & documents');
+  setText('setupDocsTitle',employer?'Company documents':school?'School documents':'Portfolio & documents');
+  const docs=profileDocLabels(role);
+  ['resume','portfolio','endorsement'].forEach(key=>{
+    const suffix=key.charAt(0).toUpperCase()+key.slice(1);
+    setText('setupDoc'+suffix+'Label',docs[key]);
+    setText('profileDoc'+suffix+'Label',docs[key]);
+  });
+  const suggest=document.getElementById('setupSkillSuggest');
+  if(suggest)suggest.classList.toggle('hidden',role!=='student');
+}
 function setupSteps(){
   const academic=(selectedRole||'student')==='student';
+  const docs=profileDocLabels();
   const steps=[
     {key:'name',label:'Full name',done:!!profileSetup.name.trim()},
-    {key:'school',label:(selectedRole==='employer'?'Company':selectedRole==='school'?'School':'School'),done:!!profileSetup.school.trim()},
+    {key:'school',label:(selectedRole==='employer'?'Company':'School'),done:!!profileSetup.school.trim()},
   ];
   if(academic){
     steps.push({key:'dept',label:'Department',done:!!profileSetup.dept&&profileSetup.dept!=='any'});
@@ -1531,9 +1570,9 @@ function setupSteps(){
     steps.push({key:'year',label:'Year level',done:!!profileSetup.year});
   }
   steps.push({key:'location',label:'Location',done:!!profileSetup.location.trim()});
-  steps.push({key:'bio',label:'Bio',done:!!profileSetup.bio.trim()});
-  steps.push({key:'skills',label:'Skills',done:!!profileSetup.skills.split(',').map(s=>s.trim()).filter(Boolean).length});
-  ['resume','portfolio','endorsement'].forEach(k=>steps.push({key:'doc:'+k,label:SETUP_DOC_LABELS[k],done:!!profileSetup.docs[k]}));
+  steps.push({key:'bio',label:selectedRole==='employer'?'Company overview':selectedRole==='school'?'Coordinator bio':'Bio',done:!!profileSetup.bio.trim()});
+  steps.push({key:'skills',label:selectedRole==='employer'?'Hiring areas':selectedRole==='school'?'Coordination areas':'Skills',done:!!profileSetup.skills.split(',').map(s=>s.trim()).filter(Boolean).length});
+  ['resume','portfolio','endorsement'].forEach(k=>steps.push({key:'doc:'+k,label:docs[k],done:!!profileSetup.docs[k]}));
   return steps;
 }
 function profileStrength(){
@@ -1544,6 +1583,7 @@ function profileStrength(){
 function prepProfileSetup(){
   const role=selectedRole||'student';
   const cfg=PURPOSE_OPTIONS[role];
+  applyRoleProfileLabels();
   const setupTitle=document.getElementById('setupTitle');
   if(setupTitle) setupTitle.textContent=role==='student'?'Set up your student profile':role==='employer'?'Set up your company profile':'Set up your coordinator profile';
   const badge=document.getElementById('setupRoleBadgeText');
@@ -1552,12 +1592,8 @@ function prepProfileSetup(){
   if(icon&&cfg) icon.textContent=cfg.badgeIcon;
   const academic=role==='student';
   document.querySelectorAll('.setup-academic-only').forEach(el=>el.style.display=academic?'':'none');
-  const schoolLabel=document.getElementById('setupSchoolLabel');
-  if(schoolLabel) schoolLabel.textContent=role==='employer'?'Company':role==='school'?'School':'School';
   const setupSubtitle=document.getElementById('setupSubtitle');
   if(setupSubtitle) setupSubtitle.textContent=role==='student'?'Add your education, skills, and resume to get better internship matches.':role==='employer'?'Add your company details and hiring profile so students can learn about your opportunities.':'Add your school and coordinator details to manage student placements and OJT reviews.';
-  const editSchoolLabel=document.getElementById('editSchoolLabel');
-  if(editSchoolLabel) editSchoolLabel.textContent=role==='employer'?'Company':role==='school'?'School':'School';
   document.querySelectorAll('.edit-academic-only').forEach(el=>el.classList.toggle('hidden',role!=='student'));
   const deptSel=document.getElementById('setupDept');
   if(deptSel&&!deptSel.dataset.setupBound){
@@ -1773,10 +1809,11 @@ function renderProfileStrength(){
   const note=document.getElementById('profileStrengthNote');
   if(pct) pct.textContent=s.pct+'%';
   if(bar) bar.style.width=s.pct+'%';
-  if(note) note.textContent=s.pct===100?'Profile complete — nice work!':s.missing.length?'Add '+s.missing.slice(0,2).join(' + ')+' to reach 100%.':'Upload your school endorsement to reach 100%.';
+  if(note) note.textContent=s.pct===100?'Profile complete — nice work!':s.missing.length?'Add '+s.missing.slice(0,2).join(' + ')+' to reach 100%.':'Upload '+profileDocLabels().endorsement.toLowerCase()+' to reach 100%.';
   renderProfileDocs();
 }
 function renderProfileDocs(){
+  applyRoleProfileLabels();
   const cards=document.querySelectorAll('#screen-profile .doc-card');
   if(!cards.length) return;
   const keys=['resume','portfolio','endorsement'];
@@ -1822,9 +1859,12 @@ function renderProfilePhoto(){
   if(avatar)avatar.setAttribute('aria-label',photo?'Change profile photo':'Add profile photo');
 }
 function applyProfileToUI(){
+  applyRoleProfileLabels();
   const empty=isProfileEmpty()&&!isDemoAccount;
+  const role=selectedRole||'student';
   const name=(profileSetup.name||'').trim()||(isDemoAccount?'Juan Dela Cruz':'');
-  if(document.getElementById('dashName').textContent!==(name||'New member')) document.getElementById('dashName').textContent=name||'New member';
+  const dashFallback=role==='employer'?'New employer':role==='school'?'School coordinator':'New student';
+  if(document.getElementById('dashName').textContent!==(name||dashFallback)) document.getElementById('dashName').textContent=name||dashFallback;
   renderProfilePhoto();
   const h3=document.querySelector('#screen-profile h3');
   if(h3) h3.textContent=name||'Not set up yet';
@@ -1834,13 +1874,20 @@ function applyProfileToUI(){
     if(prog||year||school) meta.textContent=[prog,year,school].filter(Boolean).join(' • ');
     else if(empty) meta.textContent='No details added yet — complete setup to fill this in.';
     else meta.textContent='No program details yet.';
+    if(selectedRole==='employer'||selectedRole==='school'){
+      const organization=(profileSetup.school||'').trim(),location=(profileSetup.location||'').trim();
+      meta.textContent=[organization,location].filter(Boolean).join(' · ')||(selectedRole==='employer'?'No company details yet.':'No school details yet.');
+    }
   }
   const verified=document.querySelector('#screen-profile .verified');
   if(verified) verified.style.display=empty?'none':'';
   const skillsRaw=profileSetup.skills||'';
   const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
   const skillBox=document.querySelector('#screen-profile .mb-16');
-  if(skillBox) skillBox.innerHTML=skills.length?skills.map(s=>'<span class="chip">'+escapeHTML(s)+'</span>').join(''):'<span class="sub">No skills added yet — add them in profile setup.</span>';
+  if(skillBox){
+    const label=role==='employer'?'hiring areas':role==='school'?'coordination areas':'skills';
+    skillBox.innerHTML=skills.length?skills.map(s=>'<span class="chip">'+escapeHTML(s)+'</span>').join(''):'<span class="sub">No '+label+' added yet — add them in profile setup.</span>';
+  }
   const set=(id,val)=>{const el=document.getElementById(id);if(el&&document.activeElement!==el) el.value=val||''};
   set('editName',name);
   set('editCourse',profileSetup.program||'');
