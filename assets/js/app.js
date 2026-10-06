@@ -983,7 +983,7 @@ function submitPost(){
   persistFeed();
   t.value='';onPostInput(t);clearPendingPhoto();
   renderFeed();renderDashCommunity();
-  showScreen('feed');
+  openCommunityFeed('post');
   showToast('Posted to your network','success');
 }
 function clearPendingPhoto(){
@@ -1092,6 +1092,14 @@ const POSTS=[
   {name:'GCash',ini:'GC',time:'2d ago',text:'We are hiring 5 more interns for 2026! Frontend, data, and AI roles across BGC and Ortigas. Apply through InternLink.',likes:45,comments:12,liked:false,thread:[]}
 ];
 let followed=new Set(),openThreads=new Set();
+let communityFeedFrom='dashboard';
+function openCommunityFeed(from='dashboard'){
+  communityFeedFrom=from;
+  showScreen('feed');
+}
+function closeCommunityFeed(){
+  showScreen(communityFeedFrom);
+}
 function currentUser(){
   const name=(document.getElementById('dashName').textContent||'You').trim();
   const ini=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'YO';
@@ -1237,21 +1245,21 @@ function fallbackCopy(text,done){
     document.execCommand('copy');t.remove();done();
   }catch(e){showToast('Sharing is unavailable right now','error')}
 }
-function communityPreviewHTML(p){
+function communityPreviewHTML(p,from){
   const i=POSTS.indexOf(p);
   const snippet=p.text.length>90?p.text.slice(0,90)+'…':p.text;
-  return '<div class="dash-community-card" onclick="showScreen(\'feed\')" role="button" tabindex="0" aria-label="Open community feed" onkeydown="if(event.key===\'Enter\')showScreen(\'feed\')">'+communityAuthorHTML(p.name,p.ini)+'<div class="dash-community-body"><p>'+escapeHTML(snippet)+'</p><span>'+p.likes+' likes • '+p.comments+' comments</span></div><button class="feed-action'+(p.liked?' liked':'')+'" onclick="event.stopPropagation();toggleLike('+i+')" aria-label="Like post"><span class="material-icons-outlined">'+(p.liked?'favorite':'favorite_border')+'</span></button></div>';
+  return '<div class="dash-community-card" onclick="openCommunityFeed(\''+from+'\')" role="button" tabindex="0" aria-label="Open community feed" onkeydown="if(event.key===\'Enter\')openCommunityFeed(\''+from+'\')">'+communityAuthorHTML(p.name,p.ini)+'<div class="dash-community-body"><p>'+escapeHTML(snippet)+'</p><span>'+p.likes+' likes • '+p.comments+' comments</span></div><button class="feed-action'+(p.liked?' liked':'')+'" onclick="event.stopPropagation();toggleLike('+i+')" aria-label="Like post"><span class="material-icons-outlined">'+(p.liked?'favorite':'favorite_border')+'</span></button></div>';
 }
 function renderDashCommunity(){
   const box=document.getElementById('dashCommunity');
   if(!box) return;
-  box.innerHTML=POSTS.slice(0,2).map(communityPreviewHTML).join('');
+  box.innerHTML=POSTS.slice(0,2).map(p=>communityPreviewHTML(p,'dashboard')).join('');
   bindCommunityProfileLinks(box);
 }
 function renderPostCommunity(){
   const box=document.getElementById('postCommunity');
   if(!box) return;
-  box.innerHTML=POSTS.slice(0,3).map(communityPreviewHTML).join('');
+  box.innerHTML=POSTS.slice(0,3).map(p=>communityPreviewHTML(p,'post')).join('');
   bindCommunityProfileLinks(box);
 }
 function persistFeed(){

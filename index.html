@@ -201,7 +201,7 @@
         <p class="section-label">Community</p>
         <div class="dash-community-composer" onclick="showScreen('post')" role="button" tabindex="0" aria-label="Share an update" onkeydown="if(event.key==='Enter')showScreen('post')"><div class="message-avatar"><span class="material-icons-outlined" style="font-size:18px">edit_note</span></div><span>Share an update…</span><span class="material-icons-outlined">photo_camera</span></div>
         <div id="dashCommunity"></div>
-        <button class="btn-secondary" onclick="showScreen('feed')">View community</button>
+        <button class="btn-secondary" onclick="openCommunityFeed('dashboard')">View community</button>
       </section>
 
       <!-- SCREEN: MATCHES -->
@@ -363,7 +363,7 @@
         </div>
         <p class="section-title">Recent from community</p>
         <div id="postCommunity"></div>
-        <button class="btn-secondary" onclick="showScreen('feed')">View community</button>
+        <button class="btn-secondary" onclick="openCommunityFeed('post')">View community</button>
       </section>
 
       <!-- SCREEN: PROFILE -->
@@ -442,7 +442,10 @@
 
       <!-- SCREEN: FEED -->
       <section class="screen" id="screen-feed">
-        <h2 class="scr-title">Community Feed</h2>
+        <div class="feed-screen-header">
+          <button class="back-btn" type="button" onclick="closeCommunityFeed()" aria-label="Back to previous screen"><span class="material-icons-outlined">arrow_back</span></button>
+          <h2 class="scr-title">Community Feed</h2>
+        </div>
         <div class="feed-list" id="feedList"></div>
       </section>
 
