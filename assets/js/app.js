@@ -595,6 +595,14 @@ function applyFilters(){
   document.getElementById('mapListingsTitle').textContent=selectedMapId?'Selected internship':'No selected internship';
   syncMapControls();
   document.getElementById('mapCount').textContent=list.length+' '+(list.length===1?'match':'matches')+' nearby';
+  // Render map listings chips (shows matches within current distance filter)
+  const mapListings=document.getElementById('mapListings');
+  if(!mapListings) return;
+  if(list.length===0){
+    mapListings.innerHTML='<span class="sub">No matches in range</span>';
+  }else{
+    mapListings.innerHTML=list.slice(0,8).map(m=>`<span class="chip" style="margin:2px 4px;">${m.company} – ${m.role}</span>`).join('');
+  }
   renderSelectedMapMatch();
   renderMap(list);
   const fullCount=document.getElementById('fullmapCount');
@@ -697,12 +705,60 @@ function openDetails(id){
 function applyToCurrent(){
   const m=MATCHES.find(x=>x.id===currentMatchId);
   if(!m||applications.some(a=>a.matchId===m.id)) return;
-  applications.unshift({matchId:m.id,company:m.company,role:m.role,status:'submitted',label:'Submitted',date:todayLabel()});
-  renderApplications();showScreen('applications');
+  applications.unshift({matchId:m.id,company:m.company,role:m.role,status:'submitted',label:'Submitted',date:todayLabel(),coverLetter:''});
+  renderApplications();showToast('Application submitted to ' + m.company + '!', 'success');showScreen('applications');
 }
 function toggleSave(){
   if(saved.has(currentMatchId)) saved.delete(currentMatchId); else saved.add(currentMatchId);
   document.getElementById('saveBtn').textContent=saved.has(currentMatchId)?'Saved \u2713':'Save for later';
+  saveState();
+}
+
+function openApplyModal(){
+  const m=MATCHES.find(x=>x.id===currentMatchId);
+  if(!m) return;
+  document.getElementById('applyModal').classList.add('open');
+  document.getElementById('applyModal').removeAttribute('aria-hidden');
+  document.getElementById('applyModal').setAttribute('inert','false');
+  // Auto-fill profile data
+  const name=(profileSetup.name||'Juan Dela Cruz').trim();
+  const ini=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()||'JD';
+  document.getElementById('modalName').textContent=name;
+  document.getElementById('modalSchool').textContent=profileSetup.school||'De La Salle University - Dasmariñas';
+  const skillsRaw=profileSetup.skills||'HTML / CSS, JavaScript, Git, UI / UX, Database';
+  const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  document.getElementById('modalSkills').textContent=skills.length?skills.join(', '):'No skills listed';
+  // Set current match for submission
+  currentMatchIdForApply=m.id;
+}
+
+function closeApplyModal(){
+  const modal=document.getElementById('applyModal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  modal.setAttribute('inert','true');
+  currentMatchIdForApply=null;
+}
+
+function submitApplication(){
+  const m=MATCHES.find(x=>x.id===currentMatchIdForApply);
+  if(!m) return;
+  const coverLetter=document.getElementById('coverLetter').value.trim();
+  // Save application with cover letter
+  applications.unshift({
+    matchId:m.id,
+    company:m.company,
+    role:m.role,
+    status:'submitted',
+    label:'Submitted',
+    date:todayLabel(),
+    coverLetter:coverLetter||''
+  });
+  renderApplications();
+  showToast('Application submitted to ' + m.company + '!', 'success');
+  saveState();
+  closeApplyModal();
+  showScreen('applications');
 }
 
 const messageThreads=[

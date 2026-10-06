@@ -321,6 +321,7 @@
             <button class="map-locate-btn" aria-label="Use my location" onclick="event.stopPropagation();useMyLocation()"><span class="material-icons-outlined">my_location</span></button>
             <div class="map-coords" id="mapCoords">Dasmariñas, Cavite (default)</div>
             <div class="map-count" id="mapCount">5 matches nearby</div>
+            <div class="map-listings" id="mapListings"></div>
             <div class="map-open-overlay"><span class="material-icons-outlined">open_in_full</span> Tap to expand</div>
           </div>
           <p class="section-title map-listings-title" id="mapListingsTitle">Selected internship</p>
@@ -329,7 +330,7 @@
         </div>
       </section>
 
-      <!-- SCREEN: DETAILS -->
+<!-- SCREEN: DETAILS -->
       <section class="screen" id="screen-details">
         <button class="back-btn" id="detailsBackButton" onclick="returnFromDetails()"><span class="material-icons-outlined">arrow_back</span> Back</button>
         <h2 class="scr-title" id="detTitle">Internship Details</h2>
@@ -343,9 +344,31 @@
         <p class="sub mb-8" id="detFit"></p>
         <div id="detSkills" class="mb-16"></div>
         <p class="section-title">OJT details</p>
-        <p class="sub mb-24" id="detOjt"></p>
-        <button class="btn-primary" id="applyBtn" onclick="applyToCurrent()">Apply now</button>
+        <p class="sub mb-24" id="detOjt">8 hours/day · School endorsement required. Location: </p>
+        <button class="btn-primary" id="applyBtn" onclick="openApplyModal()">Apply now</button>
         <button class="btn-secondary" id="saveBtn" onclick="toggleSave()">Save for later</button>
+        <!-- Application Form Modal -->
+        <div class="modal-overlay" id="applyModal" aria-hidden="true" inert>
+          <div class="modal">
+            <button class="modal-close" onclick="closeApplyModal()" aria-label="Close"><span class="material-icons-outlined">close</span></button>
+            <h3 class="modal-title">Apply for Internship</h3>
+            <div class="modal-body">
+              <div class="summary-section">
+                <p class="modal-sub"><strong>Name:</strong> <span id="modalName"></span></p>
+                <p class="modal-sub"><strong>School:</strong> <span id="modalSchool"></span></p>
+                <p class="modal-sub"><strong>Skills:</strong> <span id="modalSkills"></span></p>
+              </div>
+              <div class="cover-letter-section">
+                <label for="coverLetter">Cover letter / message (optional)</label>
+                <textarea id="coverLetter" rows="4" placeholder="Tell them why you're a good fit..."></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-secondary" onclick="closeApplyModal()">Cancel</button>
+              <button class="btn-primary" onclick="submitApplication()">Submit Application</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- SCREEN: APPLICATIONS -->
