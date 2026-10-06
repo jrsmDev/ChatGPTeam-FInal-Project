@@ -1727,3 +1727,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #roleWorkView:not(.hidden){display:block}
 #screen-matches #roleWorkView .rec-card{margin-bottom:12px}
 #screen-matches #roleWorkView .rec-link{margin-top:8px}
+.phone.dark #roleWorkView .rec-score{background:var(--sage-light);color:var(--green-light)}
+.phone.dark #roleWorkView .rec-skills-list .chip{background:var(--cream-light);border-color:var(--line);color:var(--ink)}
