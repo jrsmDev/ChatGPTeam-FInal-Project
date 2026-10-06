@@ -1535,3 +1535,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #screen-dashboard .dash-header{margin:0 -20px var(--sp-4);padding:10px var(--sp-5)}
 @media(max-width:360px){#screen-dashboard .dash-header{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}}
 @media(min-width:1100px){#screen-dashboard .dash-header{margin-left:-22px;margin-right:-22px;padding-left:22px;padding-right:22px}}
+
+/* ═══ Purpose checklist: square checkboxes, multi-select affordance ═══ */
+.purpose-grid.checklist{gap:10px}
+.purpose-grid.checklist .purpose-card{padding:16px 18px}
+.purpose-grid.checklist .purpose-card:focus-visible{outline:3px solid rgba(58,112,80,.28);outline-offset:2px}
+.purpose-grid.checklist .purpose-check{border-radius:8px}
+.purpose-grid.checklist .purpose-card.selected .purpose-check{border-color:var(--green);background:var(--green)}
+#purposeNextBtn:disabled{opacity:.5}

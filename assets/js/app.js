@@ -87,7 +87,7 @@ let applications=[
 ];
 let saved=new Set(), currentMatchId=null;
 const OJT_REQUIRED=400;let pendingHours=8, approvedHours=120;const remainingHours=()=>Math.max(0,OJT_REQUIRED-approvedHours-pendingHours);
-let selectedRole=null, selectedPurpose=null;
+let selectedRole=null, selectedPurpose=[];
 
 const PURPOSE_OPTIONS={
   student:{
@@ -138,29 +138,48 @@ function renderPurposeOptions(){
   document.querySelector('#purposeBadge .material-icons-outlined').textContent=cfg.badgeIcon;
   document.getElementById('purposeBadgeText').textContent=cfg.badgeText;
   document.getElementById('purposeTitle').textContent=cfg.title;
-  document.getElementById('purposeSubtitle').textContent=cfg.subtitle;
+  document.getElementById('purposeSubtitle').textContent=cfg.subtitle+' Select all that apply.';
   const grid=document.getElementById('purposeGrid');
+  grid.classList.add('checklist');
+  grid.setAttribute('role','group');
+  grid.setAttribute('aria-label',cfg.title+' — checklist, select all that apply');
   grid.innerHTML=cfg.options.map(opt=>`
-    <div class="purpose-card" data-purpose="${opt.id}" onclick="selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)">
+    <div class="purpose-card" role="checkbox" tabindex="0" aria-checked="false" data-purpose="${opt.id}" onclick="selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)}">
       <div class="purpose-icon"><span class="material-icons-outlined">${opt.icon}</span></div>
       <div class="purpose-info"><h3>${opt.title}</h3><p>${opt.desc}</p></div>
-      <div class="purpose-check"><span class="material-icons-outlined">check</span></div>
+      <div class="purpose-check" aria-hidden="true"><span class="material-icons-outlined">check</span></div>
     </div>`).join('');
-  selectedPurpose=null;
-  document.getElementById('purposeNextBtn').disabled=true;
+  selectedPurpose=[];
+  updatePurposeButton();
+}
+
+function updatePurposeButton(){
+  const btn=document.getElementById('purposeNextBtn');
+  if(!btn) return;
+  const n=Array.isArray(selectedPurpose)?selectedPurpose.length:0;
+  btn.disabled=n===0;
+  btn.textContent=n>0?'Finish setup ('+n+' selected)':'Finish setup';
 }
 
 function selectPurpose(id,title,el){
-  selectedPurpose={id,title};
-  document.querySelectorAll('.purpose-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('purposeNextBtn').disabled=false;
+  if(!Array.isArray(selectedPurpose)) selectedPurpose=[];
+  const idx=selectedPurpose.findIndex(p=>p.id===id);
+  if(idx>=0){selectedPurpose.splice(idx,1);el.classList.remove('selected');el.setAttribute('aria-checked','false')}
+  else{selectedPurpose.push({id,title});el.classList.add('selected');el.setAttribute('aria-checked','true')}
+  updatePurposeButton();
+}
+
+function purposeBadgeLabel(){
+  const cfg=PURPOSE_OPTIONS[selectedRole];
+  if(!cfg) return '';
+  if(!Array.isArray(selectedPurpose)||!selectedPurpose.length) return cfg.badgeText;
+  return cfg.badgeText+' \u2022 '+selectedPurpose.map(p=>p.title).join(', ');
 }
 
 function finishOnboarding(){
   const cfg=PURPOSE_OPTIONS[selectedRole];
-  if(cfg&&selectedPurpose){
-    document.getElementById('dashRoleText').textContent=cfg.badgeText+' \u2022 '+selectedPurpose.title;
+  if(cfg&&Array.isArray(selectedPurpose)&&selectedPurpose.length){
+    document.getElementById('dashRoleText').textContent=purposeBadgeLabel();
     document.querySelector('#dashRoleBadge .material-icons-outlined').textContent=cfg.badgeIcon;
   }
   updateDashboardForRole();
@@ -816,7 +835,8 @@ function loadState() {
     if (!raw) return false;
     const state = JSON.parse(raw);
     if (state.selectedRole) selectedRole = state.selectedRole;
-    if (state.selectedPurpose) selectedPurpose = state.selectedPurpose;
+    if (Array.isArray(state.selectedPurpose)) selectedPurpose = state.selectedPurpose.filter(p=>p&&p.id&&p.title);
+    else if (state.selectedPurpose&&state.selectedPurpose.id) selectedPurpose = [{id:state.selectedPurpose.id,title:state.selectedPurpose.title}];
     if (state.applications) applications = state.applications;
     if (state.saved) saved = new Set(state.saved);
     if (state.followed) followed = new Set(state.followed);
@@ -867,8 +887,8 @@ toggleSave = function() {
 const _origFinish = finishOnboarding;
 finishOnboarding = function() {
   const cfg=PURPOSE_OPTIONS[selectedRole];
-  if(cfg&&selectedPurpose){
-    document.getElementById('dashRoleText').textContent=cfg.badgeText+' \u2022 '+selectedPurpose.title;
+  if(cfg&&Array.isArray(selectedPurpose)&&selectedPurpose.length){
+    document.getElementById('dashRoleText').textContent=purposeBadgeLabel();
     document.querySelector('#dashRoleBadge .material-icons-outlined').textContent=cfg.badgeIcon;
   }
   updateDashboardForRole();
@@ -1461,8 +1481,8 @@ class InternLinkApp{
     renderFeed();renderDashCommunity();
     if(hasState&&selectedRole){
       const cfg=PURPOSE_OPTIONS[selectedRole];
-      if(cfg&&selectedPurpose){
-        document.getElementById('dashRoleText').textContent=cfg.badgeText+' \u2022 '+selectedPurpose.title;
+      if(cfg&&Array.isArray(selectedPurpose)&&selectedPurpose.length){
+        document.getElementById('dashRoleText').textContent=purposeBadgeLabel();
         document.querySelector('#dashRoleBadge .material-icons-outlined').textContent=cfg.badgeIcon;
       }
       updateDashboardForRole();
