@@ -1714,7 +1714,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #screen-login .login-brand-logo{width:min(190px,58%);transform:translateY(12px)}
 #screen-login .login-form-area{position:relative;z-index:2;flex:1 0 auto;min-height:0;width:100%;margin:0;padding:30px 28px 32px;display:flex;flex-direction:column;justify-content:flex-start}
 #screen-login .login-title{margin:0 0 4px;line-height:1.15}
-#screen-login .login-desc{margin-bottom:18px}
+#screen-login .login-desc{margin-bottom:22px}
+#screen-login .field{margin-bottom:18px}
+#screen-login .login-meta-row{margin-bottom:16px}
+#screen-login #loginSubmit{min-height:48px}
+#screen-login .btn-google{margin-top:14px;min-height:48px}
+#screen-login .login-signup{margin-top:16px}
 .phone.dark #screen-login{background:var(--canvas)}
 .phone.dark #screen-login::before{display:none}
 
