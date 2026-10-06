@@ -1601,6 +1601,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fullmap-header h3{flex:1;min-width:0}
 .fullmap-header .fullmap-close,.fullmap-header .fullmap-filter-toggle{flex:none}
 .fullmap-body .fullmap-zoom-label{position:absolute;z-index:6;right:14px;top:10px;bottom:auto;margin:0}
+
+/* ═══ Profile setup: progress, docs, nudge ═══ */
+#screen-profileSetup{padding:64px 22px 48px;max-width:560px}
+.setup-progress-card{margin:0 0 16px}
+.setup-suggest{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 14px}
+.setup-suggest-label{flex:1 1 100%;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+.setup-skill-chip{cursor:pointer}
+.doc-card{position:relative}
+.doc-card .doc-remove{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--white);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.doc-card .doc-remove .material-icons-outlined{font-size:16px}
+.setup-nudge{display:flex;align-items:center;gap:10px;background:var(--sage-light);border:1px solid var(--sage);border-radius:16px;padding:12px 12px;margin:0 0 14px}
+.setup-nudge.hidden{display:none}
+.setup-nudge-icon{width:38px;height:38px;min-width:38px;border-radius:12px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center}
+.setup-nudge-icon .material-icons-outlined{font-size:20px}
+.setup-nudge-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.setup-nudge-body strong{font-size:13px;color:var(--green-dark)}
+.setup-nudge-body span{font-size:11px;color:var(--muted);line-height:1.4}
+.setup-nudge-cta{flex:none;border:none;border-radius:10px;background:var(--green);color:#fff;font-family:var(--sans);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer}
+.setup-nudge-dismiss{flex:none;background:none;border:none;color:var(--muted);cursor:pointer;display:flex;padding:4px}
+.setup-nudge-dismiss .material-icons-outlined{font-size:18px}
+.phone.dark .setup-nudge-body strong{color:var(--green-light)}
+.btn-secondary:disabled{opacity:.5;cursor:default}
+.setup-name-hint{margin-top:8px;text-align:center}
+
+/* ═══ Demo account entry ═══ */
+.demo-account-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px}
+.demo-account-btn .material-icons-outlined{font-size:18px}
+.demo-account-hint{margin-top:8px;text-align:center;font-size:11px;color:var(--muted-light);line-height:1.5}
+.demo-account-hint a{color:var(--green);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:500px){
   #screen-dashboard .dash-header{top:0;margin-top:0}
 }

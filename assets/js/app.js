@@ -80,14 +80,21 @@ const COMMUNITY_PROFILES={
   'GCash':{initials:'GC',kind:'Employer',headline:'Hiring team · Financial technology',description:'Company account sharing internship opportunities across frontend development, data, and AI.',organization:'Employer · Internship hiring team',skills:['Technology','Data','Internship Hiring']}
 };
 let filters={dist:35,match:70,skill:'any',program:'any',course:'any'};
-let applications=[
+const DEFAULT_APPLICATIONS=[
   {matchId:'m1',company:'GCash',role:'Frontend Developer Intern',status:'review',label:'Under review',date:'Oct 3'},
   {company:'Accenture',role:'UI/UX Design Intern',status:'interview',label:'Interview',date:'Oct 1'},
   {matchId:'m5',company:'SM Prime',role:'IT Support Intern',status:'interview',label:'Interview',date:'Sept 29'}
 ];
+let applications=JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS));
 let saved=new Set(), currentMatchId=null;
 const OJT_REQUIRED=400;let pendingHours=8, approvedHours=120;const remainingHours=()=>Math.max(0,OJT_REQUIRED-approvedHours-pendingHours);
 let selectedRole=null, selectedPurpose=[];
+
+/* ═══ Demo account (pre-made; credentials are NEVER stored) ═══ */
+const DEMO_ACCOUNT_EMAIL='juan.delacruz@gmail.com';
+const DEMO_JUAN_PROFILE={name:'Juan Dela Cruz',school:'De La Salle University - Dasmariñas',dept:'Engineering, Computing & IT',program:'Information Technology',year:'3rd Year',location:'Dasmariñas, Cavite',bio:'Aspiring web developer with a passion for UI/UX and clean code.',skills:'HTML / CSS, JavaScript, Git, UI / UX, Database',docs:{resume:{name:'Juan_DelaCruz_Resume.pdf',size:0},portfolio:{name:'Juan_DelaCruz_Portfolio.pdf',size:0},endorsement:{name:'Endorsement - DLSU-D.pdf',size:0}},done:true,dismissed:true};
+const DEMO_JUAN_PURPOSES=[{id:'find-internship',title:'Finding an Internship'},{id:'ojt-placement',title:'OJT Placement'}];
+let isDemoAccount=false;
 
 const PURPOSE_OPTIONS={
   student:{
@@ -718,7 +725,7 @@ function renderMessages(){
   `).join('');
 }
 
-const noNavScreens=new Set(['onboarding','loginOptions','login','roleSelect','purposeSelect','details','chat','notifications','settings','feed','editProfile','ojtLog','communityProfile']);
+const noNavScreens=new Set(['onboarding','loginOptions','login','roleSelect','purposeSelect','profileSetup','details','chat','notifications','settings','feed','editProfile','ojtLog','communityProfile']);
 let internLinkApp;
 function showScreen(name){return internLinkApp.screens.show(name)}
 
@@ -821,7 +828,7 @@ function animateDashboard() {
 function saveState() {
   try {
     const state = {
-      selectedRole, selectedPurpose,
+      selectedRole, selectedPurpose, profileSetup, isDemoAccount,
       applications, saved: [...saved], followed: [...followed],
       pendingHours, approvedHours, ojtLogs, filters, userLocation
     };
@@ -837,6 +844,7 @@ function loadState() {
     if (state.selectedRole) selectedRole = state.selectedRole;
     if (Array.isArray(state.selectedPurpose)) selectedPurpose = state.selectedPurpose.filter(p=>p&&p.id&&p.title);
     else if (state.selectedPurpose&&state.selectedPurpose.id) selectedPurpose = [{id:state.selectedPurpose.id,title:state.selectedPurpose.title}];
+    if (typeof state.isDemoAccount==='boolean') isDemoAccount = state.isDemoAccount;
     if (state.applications) applications = state.applications;
     if (state.saved) saved = new Set(state.saved);
     if (state.followed) followed = new Set(state.followed);
@@ -856,6 +864,10 @@ function loadState() {
       userLocation={lat:Number(state.userLocation.lat),lng:Number(state.userLocation.lng),label:compactLocationLabel(state.userLocation.label||'Saved location')};
       recalcDistances();
       mapRefit=true;
+    }
+    if(state.profileSetup&&typeof state.profileSetup==='object'){
+      const ps=state.profileSetup;
+      profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...ps,docs:{resume:null,portfolio:null,endorsement:null,...(ps.docs||{})}};
     }
     
     return !!state.selectedRole;
@@ -893,8 +905,8 @@ finishOnboarding = function() {
   }
   updateDashboardForRole();
   saveState();
-  showScreen('dashboard');
-  setTimeout(() => showToast('Welcome to InternLink! 🎉', 'success'), 600);
+  openProfileSetup();
+  setTimeout(() => showToast('One last step — set up your profile, or skip for later.','info'), 600);
 };
 
 // Replace edit profile alert with toast
@@ -928,7 +940,7 @@ updateDashboardForRole=function(){
     s[1].textContent=getFiltered().length;s[2].textContent=OJT_REQUIRED;s[3].textContent=applications.length;
   }
   document.querySelectorAll('.student-only').forEach(e=>e.classList.toggle('hidden',role!=='student'));
-  document.getElementById('dashName').textContent=v.name;
+  document.getElementById('dashName').textContent=(profileSetup.name||'').trim()||(isDemoAccount?v.name:'New member');
   renderDashList();
 };
 
@@ -1134,7 +1146,7 @@ function communityProfileFor(name){
       employer:{kind:'Employer',headline:'Employer · Hiring team',description:'Connecting students with internship opportunities and helping them gain practical, career-building experience.',organization:'Employer · Hiring internships'},
       school:{kind:'School coordinator',headline:'School Coordinator · OJT support',description:'Supporting students with OJT requirements, internship placements, and connections with employers.',organization:'School Coordinator · Student placement support'}
     }[role];
-    return {name,initials:currentUser().ini,...roleInfo,skills:MY_SKILLS};
+    return {name,initials:currentUser().ini,...roleInfo,skills:(profileSetup.skills||'').split(',').map(s=>s.trim()).filter(Boolean)};
   }
   return COMMUNITY_PROFILES[name]?{...COMMUNITY_PROFILES[name],name}:{name,initials:name.split(' ').map(part=>part[0]).join('').slice(0,2).toUpperCase(),kind:'Community member',headline:'InternLink community member',description:'A member of the InternLink community. Their profile details have not been added in this prototype.',organization:'Community member',skills:[]};
 }
@@ -1302,12 +1314,23 @@ function openEditProfile(){showScreen('editProfile')}
 function saveProfile(){
   const name=document.getElementById('editName').value.trim();
   if(!name){showToast('Name is required','error');return}
-  document.getElementById('dashName').textContent=name;
-  const ini=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-  document.querySelector('#screen-profile .avatar').textContent=ini;
-  document.querySelector('#screen-profile h3').textContent=name;
-  const skills=document.getElementById('editSkills').value.split(',').map(s=>s.trim()).filter(Boolean);
-  document.querySelector('#screen-profile .mb-16').innerHTML=skills.map(s=>'<span class="chip">'+escapeHTML(s)+'</span>').join('');
+  const course=document.getElementById('editCourse').value.trim();
+  const year=document.getElementById('editYear').value;
+  const school=document.getElementById('editSchool').value.trim();
+  const location=document.getElementById('editLocation').value.trim();
+  const bio=document.getElementById('editBio').value.trim();
+  const skillsRaw=document.getElementById('editSkills').value;
+  profileSetup.name=name;
+  if(course) profileSetup.program=course;
+  if(year) profileSetup.year=year;
+  if(school) profileSetup.school=school;
+  if(location) profileSetup.location=location;
+  if(bio) profileSetup.bio=bio;
+  profileSetup.skills=skillsRaw;
+  saveState();
+  applyProfileToUI();
+  renderProfileStrength();
+  renderSetupNudge();
   showToast('Profile updated!','success');
   showScreen('profile');
 }
@@ -1320,18 +1343,332 @@ function handleDocUpload(type){
   input.onchange=function(){
     if(this.files&&this.files[0]){
       const f=this.files[0];
+      profileSetup.docs[type]={name:f.name,size:f.size||0};
+      saveState();
+      renderProfileDocs();
+      renderProfileStrength();
+      renderSetupDocs();
+      updateSetupProgressUI();
+      renderSetupNudge();
       showToast(f.name+' uploaded!','success');
     }
   };
   input.click();
 }
+function removeProfileDoc(type){
+  if(profileSetup.docs[type]){profileSetup.docs[type]=null;saveState();renderProfileDocs();renderProfileStrength();renderSetupDocs();updateSetupProgressUI();renderSetupNudge()}
+}
+
+/* ═══ Profile Setup (onboarding: set up now or later) ═══ */
+let profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+const SETUP_DOC_LABELS={resume:'Resume / CV',portfolio:'Project portfolio',endorsement:'School endorsement'};
+function setupSteps(){
+  const academic=(selectedRole||'student')==='student';
+  const steps=[
+    {key:'name',label:'Full name',done:!!profileSetup.name.trim()},
+    {key:'school',label:(selectedRole==='employer'?'Company':selectedRole==='school'?'School':'School'),done:!!profileSetup.school.trim()},
+  ];
+  if(academic){
+    steps.push({key:'dept',label:'Department',done:!!profileSetup.dept&&profileSetup.dept!=='any'});
+    steps.push({key:'program',label:'Course / Program',done:!!profileSetup.program});
+    steps.push({key:'year',label:'Year level',done:!!profileSetup.year});
+  }
+  steps.push({key:'location',label:'Location',done:!!profileSetup.location.trim()});
+  steps.push({key:'bio',label:'Bio',done:!!profileSetup.bio.trim()});
+  steps.push({key:'skills',label:'Skills',done:!!profileSetup.skills.split(',').map(s=>s.trim()).filter(Boolean).length});
+  ['resume','portfolio','endorsement'].forEach(k=>steps.push({key:'doc:'+k,label:SETUP_DOC_LABELS[k],done:!!profileSetup.docs[k]}));
+  return steps;
+}
+function profileStrength(){
+  const steps=setupSteps();
+  const done=steps.filter(s=>s.done).length;
+  return {pct:Math.round(done/steps.length*100),done,total:steps.length,missing:steps.filter(s=>!s.done).map(s=>s.label)};
+}
+function prepProfileSetup(){
+  const role=selectedRole||'student';
+  const cfg=PURPOSE_OPTIONS[role];
+  const badge=document.getElementById('setupRoleBadgeText');
+  if(badge) badge.textContent=cfg?cfg.badgeText:role;
+  const icon=document.querySelector('#setupRoleBadge .material-icons-outlined');
+  if(icon&&cfg) icon.textContent=cfg.badgeIcon;
+  const academic=role==='student';
+  document.querySelectorAll('.setup-academic-only').forEach(el=>el.style.display=academic?'':'none');
+  const schoolLabel=document.getElementById('setupSchoolLabel');
+  if(schoolLabel) schoolLabel.textContent=role==='employer'?'Company':role==='school'?'School':'School';
+  const deptSel=document.getElementById('setupDept');
+  if(deptSel&&!deptSel.dataset.setupBound){
+    deptSel.innerHTML='<option value="any">Select a department</option>'+PROGRAM_FIELDS.map(d=>'<option value="'+escapeHTML(d)+'">'+escapeHTML(d)+'</option>').join('');
+    deptSel.dataset.setupBound='true';
+  }
+  if(deptSel) deptSel.value=PROGRAM_FIELDS.includes(profileSetup.dept)?profileSetup.dept:'any';
+  syncSetupProgramOptions();
+  const set=(id,val)=>{const el=document.getElementById(id);if(el) el.value=val||''};
+  set('setupName',profileSetup.name);
+  set('setupSchool',profileSetup.school);
+  set('setupProgram',profileSetup.program);
+  set('setupYear',profileSetup.year);
+  set('setupLocation',profileSetup.location);
+  set('setupBio',profileSetup.bio);
+  set('setupSkills',profileSetup.skills);
+  renderSetupSkillSuggest();
+  renderSetupDocs();
+  updateSetupProgressUI();
+}
+function openProfileSetup(){prepProfileSetup();showScreen('profileSetup')}
+function syncSetupProgramOptions(){
+  const dept=document.getElementById('setupDept')?.value||profileSetup.dept||'any';
+  const programs=PROGRAMS_BY_DEPARTMENT[dept]||[];
+  const prog=document.getElementById('setupProgram');
+  if(!prog) return;
+  prog.replaceChildren();
+  if(!programs.length){
+    const o=document.createElement('option');o.value='';o.textContent='Select a department first';prog.appendChild(o);prog.disabled=true;return;
+  }
+  const ph=document.createElement('option');ph.value='';ph.textContent='Select your program';prog.appendChild(ph);
+  programs.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;prog.appendChild(o)});
+  prog.disabled=false;
+  prog.value=programs.includes(profileSetup.program)?profileSetup.program:'';
+}
+function onSetupDeptChanged(){
+  profileSetup.dept=document.getElementById('setupDept').value||'any';
+  profileSetup.program='';
+  syncSetupProgramOptions();
+  onSetupFieldChanged();
+}
+function onSetupFieldChanged(){
+  const get=id=>document.getElementById(id)?.value||'';
+  profileSetup.name=get('setupName').trim();
+  profileSetup.school=get('setupSchool').trim();
+  profileSetup.dept=document.getElementById('setupDept')?.value||'any';
+  profileSetup.program=get('setupProgram');
+  profileSetup.year=get('setupYear');
+  profileSetup.location=get('setupLocation').trim();
+  profileSetup.bio=get('setupBio').trim();
+  profileSetup.skills=get('setupSkills');
+  updateSetupProgressUI();
+}
+function recommendedSkillsForSetup(limit=8){
+  const dept=profileSetup.dept, prog=(profileSetup.program||'').trim();
+  const fields=FIELDS_BY_DEPARTMENT[dept]||[];
+  const scored={};
+  MATCHES.forEach(m=>{
+    let w=0;
+    const elig=MATCH_ELIGIBLE_PROGRAMS[m.id]||[];
+    if(prog&&elig.includes(prog)) w+=3;
+    else if(dept&&dept!=='any'&&fields.includes(m.program)) w+=1;
+    if(!w) return;
+    m.skills.forEach(s=>{scored[s]=(scored[s]||0)+w});
+  });
+  let ranked=Object.entries(scored).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  if(!ranked.length) ranked=[...new Set(MATCHES.flatMap(m=>m.skills))].sort();
+  const chosen=new Set((profileSetup.skills||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean));
+  return ranked.filter(s=>!chosen.has(s.toLowerCase())).slice(0,limit);
+}
+function setupSuggestHeading(){
+  if((profileSetup.program||'').trim()) return 'Suggested for '+profileSetup.program.trim();
+  if(profileSetup.dept&&profileSetup.dept!=='any') return 'Suggested for '+profileSetup.dept;
+  return 'Popular skills';
+}
+function renderSetupSkillSuggest(){
+  const box=document.getElementById('setupSkillSuggest');
+  const list=document.getElementById('setupSkillsList');
+  if(!box) return;
+  const all=[...new Set(MATCHES.flatMap(m=>m.skills))].sort();
+  if(list) list.innerHTML=all.slice(0,24).map(s=>'<option value="'+escapeHTML(s)+'">').join('');
+  const rec=recommendedSkillsForSetup(8);
+  box.innerHTML='<span class="setup-suggest-label">'+escapeHTML(setupSuggestHeading())+' — tap to add</span>'+(rec.length?rec.map(s=>'<button type="button" class="chip chip-btn setup-skill-chip" onclick="addSetupSkill(\''+s.replace(/'/g,"\\'")+'\')">+ '+escapeHTML(s)+'</button>').join(''):'<span class="sub">All suggestions added — nice!</span>');
+}
+function addSetupSkill(skill){
+  const cur=document.getElementById('setupSkills');
+  const parts=(cur.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!parts.some(p=>p.toLowerCase()===skill.toLowerCase())) parts.push(skill);
+  cur.value=parts.join(', ');
+  onSetupFieldChanged();
+  renderSetupSkillSuggest();
+  cur.focus();
+}
+function setupDocUpload(type){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.pdf,.doc,.docx,.png,.jpg,.jpeg';
+  input.onchange=function(){
+    if(this.files&&this.files[0]){
+      const f=this.files[0];
+      profileSetup.docs[type]={name:f.name,size:f.size||0};
+      saveState();renderSetupDocs();updateSetupProgressUI();renderProfileDocs();renderProfileStrength();renderSetupNudge();
+      showToast(f.name+' attached!','success');
+    }
+  };
+  input.click();
+}
+function setupDocRemove(type,event){
+  if(event){event.stopPropagation()}
+  profileSetup.docs[type]=null;
+  saveState();renderSetupDocs();updateSetupProgressUI();renderProfileDocs();renderProfileStrength();renderSetupNudge();
+}
+function renderSetupDocs(){
+  ['resume','portfolio','endorsement'].forEach(k=>{
+    const el=document.getElementById('setupDoc'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(!el) return;
+    const doc=profileSetup.docs[k];
+    el.textContent=doc?('✓ '+doc.name):'Not uploaded';
+    el.classList.toggle('uploaded',!!doc);
+    el.classList.toggle('pending',!doc);
+  });
+  const list=document.getElementById('setupDocList');
+  if(list) list.querySelectorAll('.doc-card').forEach(card=>{
+    const match=(card.getAttribute('onclick')||'').match(/setupDocUpload\('(\w+)'\)/);
+    if(!match) return;
+    const k=match[1];
+    let btn=card.querySelector('.doc-remove');
+    if(profileSetup.docs[k]&&!btn){
+      btn=document.createElement('button');
+      btn.className='doc-remove';
+      btn.type='button';
+      btn.setAttribute('aria-label','Remove '+k+' file');
+      btn.innerHTML='<span class="material-icons-outlined">close</span>';
+      btn.onclick=e=>setupDocRemove(k,e);
+      card.appendChild(btn);
+    }
+    if(!profileSetup.docs[k]&&btn) btn.remove();
+  });
+}
+function updateSetupProgressUI(){
+  const s=profileStrength();
+  const pct=document.getElementById('setupProgressPct');
+  const fill=document.getElementById('setupProgressFill');
+  const note=document.getElementById('setupProgressNote');
+  if(pct) pct.textContent=s.pct+'%';
+  if(fill) requestAnimationFrame(()=>{fill.style.width=s.pct+'%'});
+  const hasName=!!(profileSetup.name||'').trim();
+  const saveBtn=document.getElementById('setupSaveBtn');
+  const laterBtn=document.getElementById('setupLaterBtn');
+  if(saveBtn) saveBtn.disabled=!hasName;
+  if(laterBtn) laterBtn.disabled=!hasName;
+  const hint=document.getElementById('setupNameHint');
+  if(hint) hint.style.display=hasName?'none':'';
+  if(note) note.textContent=!hasName?'Enter your full name above to continue — the rest can wait.':s.pct===100?'All set! Save to finish your profile.':s.done+' of '+s.total+' steps done — next: '+s.missing.slice(0,2).join(', ')+'.';
+  renderSetupSkillSuggest();
+}
+function requireSetupName(){
+  onSetupFieldChanged();
+  if(!(profileSetup.name||'').trim()){
+    showToast('Please enter your full name first.','error');
+    const input=document.getElementById('setupName');
+    if(input) input.focus();
+    updateSetupProgressUI();
+    return false;
+  }
+  return true;
+}
+function saveProfileSetup(){
+  if(!requireSetupName()) return;
+  const s=profileStrength();
+  profileSetup.done=s.pct===100;
+  if(!profileSetup.done) profileSetup.dismissed=false;
+  saveState();
+  applyProfileToUI();
+  renderProfileStrength();
+  renderSetupNudge();
+  showScreen('dashboard');
+  setTimeout(()=>showToast(s.pct===100?'Profile complete! 🎉':'Progress saved — you can finish setup anytime.','success'),400);
+}
+function skipProfileSetup(){
+  if(!requireSetupName()) return;
+  profileSetup.done=false;
+  profileSetup.dismissed=false;
+  saveState();
+  applyProfileToUI();
+  renderSetupNudge();
+  showScreen('dashboard');
+  setTimeout(()=>showToast('No problem — set up your profile later from the dashboard.','info'),400);
+}
+function dismissSetupNudge(){
+  profileSetup.dismissed=true;
+  saveState();
+  renderSetupNudge();
+}
+function renderSetupNudge(){
+  const box=document.getElementById('profileSetupNudge');
+  if(!box) return;
+  const s=profileStrength();
+  const show=!profileSetup.done&&!profileSetup.dismissed&&(selectedRole||loadStateRoleHint());
+  box.classList.toggle('hidden',!show);
+  if(!show) return;
+  const title=document.getElementById('setupNudgeTitle');
+  const sub=document.getElementById('setupNudgeSub');
+  if(title) title.textContent=s.done===0?'Set up your profile':'Complete your profile ('+s.done+'/'+s.total+')';
+  if(sub) sub.textContent=s.missing.length?'Missing: '+s.missing.slice(0,3).join(', ')+'.':'Add the last details to reach 100%.';
+}
+function loadStateRoleHint(){return !!selectedRole}
+function renderProfileStrength(){
+  const s=profileStrength();
+  const pct=document.getElementById('profileStrengthPct');
+  const bar=document.getElementById('profileStrengthBar');
+  const note=document.getElementById('profileStrengthNote');
+  if(pct) pct.textContent=s.pct+'%';
+  if(bar) bar.style.width=s.pct+'%';
+  if(note) note.textContent=s.pct===100?'Profile complete — nice work!':s.missing.length?'Add '+s.missing.slice(0,2).join(' + ')+' to reach 100%.':'Upload your school endorsement to reach 100%.';
+  renderProfileDocs();
+}
+function renderProfileDocs(){
+  const cards=document.querySelectorAll('#screen-profile .doc-card');
+  if(!cards.length) return;
+  const keys=['resume','portfolio','endorsement'];
+  cards.forEach((card,i)=>{
+    const k=keys[i];
+    if(!k) return;
+    const status=card.querySelector('.doc-status');
+    const doc=profileSetup.docs[k];
+    if(status){status.textContent=doc?doc.name:'Not uploaded';status.classList.toggle('uploaded',!!doc);status.classList.toggle('pending',!doc)}
+  });
+}
+function isProfileEmpty(){
+  return !(profileSetup.name||'').trim()&&!(profileSetup.school||'').trim()&&!(profileSetup.program||'').trim()&&!(profileSetup.year||'').trim()&&!(profileSetup.location||'').trim()&&!(profileSetup.bio||'').trim()&&!(profileSetup.skills||'').split(',').map(s=>s.trim()).filter(Boolean).length&&!profileSetup.docs.resume&&!profileSetup.docs.portfolio&&!profileSetup.docs.endorsement;
+}
+function applyProfileToUI(){
+  const empty=isProfileEmpty()&&!isDemoAccount;
+  const name=(profileSetup.name||'').trim()||(isDemoAccount?'Juan Dela Cruz':'');
+  if(document.getElementById('dashName').textContent!==(name||'New member')) document.getElementById('dashName').textContent=name||'New member';
+  const ini=name?name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
+  const avatar=document.querySelector('#screen-profile .avatar');
+  if(avatar) avatar.textContent=ini;
+  const h3=document.querySelector('#screen-profile h3');
+  if(h3) h3.textContent=name||'Not set up yet';
+  const meta=document.querySelector('#screen-profile .meta');
+  if(meta){
+    const prog=(profileSetup.program||'').trim(), year=(profileSetup.year||'').trim(), school=(profileSetup.school||'').trim();
+    if(prog||year||school) meta.textContent=[prog,year,school].filter(Boolean).join(' • ');
+    else if(empty) meta.textContent='No details added yet — complete setup to fill this in.';
+    else meta.textContent='No program details yet.';
+  }
+  const verified=document.querySelector('#screen-profile .verified');
+  if(verified) verified.style.display=empty?'none':'';
+  const skillsRaw=profileSetup.skills||'';
+  const skills=skillsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const skillBox=document.querySelector('#screen-profile .mb-16');
+  if(skillBox) skillBox.innerHTML=skills.length?skills.map(s=>'<span class="chip">'+escapeHTML(s)+'</span>').join(''):'<span class="sub">No skills added yet — add them in profile setup.</span>';
+  const set=(id,val)=>{const el=document.getElementById(id);if(el&&document.activeElement!==el) el.value=val||''};
+  set('editName',name);
+  set('editCourse',profileSetup.program||'');
+  set('editYear',profileSetup.year||'');
+  set('editSchool',profileSetup.school||'');
+  set('editLocation',profileSetup.location||'');
+  set('editBio',profileSetup.bio||'');
+  set('editSkills',skillsRaw);
+  const loc=document.querySelectorAll('.user-location');
+  loc.forEach(el=>{if(profileSetup.location&&!el.closest('#screen-profileSetup')){el.dataset.live='1';el.innerHTML='<span class="material-icons-outlined">location_on</span>'+escapeHTML(profileSetup.location)}});
+  renderProfileDocs();
+  updateAccountEmailUI();
+}
 
 /* ═══ OJT Hour Logging ═══ */
-let ojtLogs=[
+const DEFAULT_OJT_LOGS=[
   {date:'Oct 5',hours:8,status:'approved'},
   {date:'Oct 4',hours:8,status:'approved'},
   {date:'Oct 3',hours:8,status:'pending'}
 ];
+let ojtLogs=JSON.parse(JSON.stringify(DEFAULT_OJT_LOGS));
 function renderOjtLogs(){
   const box=document.getElementById('ojtLogList');
   if(!box)return;
@@ -1395,7 +1732,9 @@ class ScreenManager{
     const statusbar=document.getElementById('statusbar');
     if(name==='onboarding'||name==='loginOptions'){statusbar.classList.add('light');statusbar.classList.remove('dark')}
     else{statusbar.classList.remove('light');statusbar.classList.add('dark')}
-    if(name==='dashboard'){updateDashboardForRole();animateDashboard();renderDashCommunity();requestAnimationFrame(()=>{try{initDashMap();updateDashMap()}catch(e){}})}
+    if(name==='dashboard'){updateDashboardForRole();animateDashboard();renderDashCommunity();renderSetupNudge();requestAnimationFrame(()=>{try{initDashMap();updateDashMap()}catch(e){}})}
+    if(name==='profile'){renderProfileStrength();applyProfileToUI()}
+    if(name==='profileSetup'){prepProfileSetup()}
     if(name==='matches'){
       mapRefit=true;
       requestAnimationFrame(()=>{renderMap(getFiltered());try{if(miniMap){miniMap.invalidateSize();miniMap.setView([userLocation.lat,userLocation.lng],miniMap.getZoom())}}catch(e){}});
@@ -1440,9 +1779,72 @@ class AuthController{
       showToast('Please enter a valid email','error');return;
     }
     if(!password||password.length<6){showToast('Password must be at least 6 characters','error');return}
-    showToast(this.mode==='signup'?'Demo only — no account was created.':'Demo sign-in — no credentials were sent.','info');
-    showScreen('roleSelect');
+    // Prototype demo: credentials are never saved or sent anywhere — clear them immediately.
+    clearLoginInputs();
+    if(this.method!=='phone'&&contact.trim().toLowerCase()===DEMO_ACCOUNT_EMAIL){loginDemoJuan();return}
+    startNewAccount(this.mode);
   }
+}
+
+/* Pre-made demo account: loads Juan Dela Cruz exactly as shipped, no password needed. */
+function loginDemoJuan(){
+  selectedRole='student';
+  selectedPurpose=DEMO_JUAN_PURPOSES.map(p=>({...p}));
+  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...JSON.parse(JSON.stringify(DEMO_JUAN_PROFILE))};
+  isDemoAccount=true;
+  applications=JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS));
+  saved=new Set();followed=new Set();openThreads=new Set();
+  pendingHours=8;approvedHours=120;ojtLogs=JSON.parse(JSON.stringify(DEFAULT_OJT_LOGS));
+  saveState();
+  const cfg=PURPOSE_OPTIONS.student;
+  document.getElementById('dashRoleText').textContent=purposeBadgeLabel();
+  document.querySelector('#dashRoleBadge .material-icons-outlined').textContent=cfg.badgeIcon;
+  updateDashboardForRole();
+  applyProfileToUI();
+  renderSetupNudge();
+  updateAccountEmailUI();
+  showScreen('dashboard');
+  setTimeout(()=>showToast('Welcome back, Juan! (demo account)','success'),400);
+}
+
+/* New account: blank slate through role → purpose → profile setup. Nothing from login is kept. */
+function startNewAccount(mode){
+  selectedRole=null;
+  selectedPurpose=[];
+  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+  isDemoAccount=false;
+  applications=[];saved=new Set();followed=new Set();openThreads=new Set();
+  pendingHours=0;approvedHours=0;ojtLogs=[];
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  const roleNext=document.getElementById('roleNextBtn');
+  if(roleNext) roleNext.disabled=true;
+  document.getElementById('purposeGrid').innerHTML='';
+  const purposeNext=document.getElementById('purposeNextBtn');
+  if(purposeNext){purposeNext.disabled=true;purposeNext.textContent='Finish setup'}
+  saveState();
+  updateAccountEmailUI();
+  showToast(mode==='signup'?'Demo only — no account was created and nothing was saved.':'Demo sign-in — no credentials were saved or sent.','info');
+  showScreen('roleSelect');
+}
+
+function fillDemoAccount(){
+  const email=document.getElementById('loginEmail');
+  if(email){email.value=DEMO_ACCOUNT_EMAIL}
+  const pass=document.getElementById('loginPass');
+  if(pass){pass.value='';pass.focus();pass.placeholder='Any 6+ characters work for the demo'}
+  showToast('Demo email filled — type any 6+ character password, or use Continue as Juan.','info');
+}
+
+function clearLoginInputs(){
+  const email=document.getElementById('loginEmail');
+  const pass=document.getElementById('loginPass');
+  if(pass) pass.value='';
+  if(email&&document.activeElement!==email){/* keep email visible for context; it is never stored */}
+}
+
+function updateAccountEmailUI(){
+  const sub=document.getElementById('settingsEmailSub');
+  if(sub) sub.textContent=isDemoAccount?DEMO_ACCOUNT_EMAIL:'Demo session — no email stored';
 }
 
 class OverlayController{
@@ -1479,6 +1881,7 @@ class InternLinkApp{
     syncMapControls();
     applyFilters();
     renderFeed();renderDashCommunity();
+    applyProfileToUI();renderProfileStrength();
     if(hasState&&selectedRole){
       const cfg=PURPOSE_OPTIONS[selectedRole];
       if(cfg&&Array.isArray(selectedPurpose)&&selectedPurpose.length){

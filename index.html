@@ -95,7 +95,9 @@
             </div>
             <button class="btn-primary" id="loginSubmit" type="submit">Log in</button>
           </form>
-          <p class="auth-demo-note">Prototype demo only — no account will be created and no credentials are sent.</p>
+          <p class="auth-demo-note">Prototype demo only — no account is created and passwords are never saved or sent.</p>
+          <button class="btn-secondary demo-account-btn" type="button" onclick="loginDemoJuan()"><span class="material-icons-outlined">person</span>Continue as Juan Dela Cruz (demo)</button>
+          <p class="demo-account-hint">Pre-made account: juan.delacruz@gmail.com · <a onclick="fillDemoAccount()">autofill it</a> and use any 6+ character password — or continue in one tap.</p>
           <div class="divider">or</div>
           <button class="btn-google" type="button" onclick="showToast('Google sign-in is not connected in this prototype.','info')">
             <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -144,6 +146,39 @@
         <button class="btn-back-text" onclick="showScreen('roleSelect')"><span class="material-icons-outlined">arrow_back</span> Change my role</button>
       </section>
 
+      <!-- SCREEN: PROFILE SETUP -->
+      <section class="screen" id="screen-profileSetup">
+        <div class="purpose-header"><div class="brand-badge sm"><img class="brand-mark" src="assets/images/internlink-logo.png" alt="InternLink"></div></div>
+        <div class="step-indicator"><span class="step-dot done"></span><span class="step-dot done"></span><span class="step-dot done"></span></div>
+        <div id="setupRoleBadge" class="purpose-selected-badge"><span class="material-icons-outlined">school</span><span id="setupRoleBadgeText">Student</span></div>
+        <h2 class="purpose-title">Set up your profile</h2>
+        <p class="purpose-subtitle" id="setupSubtitle">Add your details now, or save what you have and finish later.</p>
+        <div class="match-breakdown setup-progress-card"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span id="setupProgressPct">0%</span></div><div class="bar-bg"><div class="bar-fill" id="setupProgressFill" style="width:0%"></div></div></div><p class="sub mt-8" id="setupProgressNote">Fill in what you can — every step counts.</p></div>
+        <div class="edit-form">
+          <div class="field"><label for="setupName">Full name</label><input id="setupName" placeholder="Juan Dela Cruz" autocomplete="name" oninput="onSetupFieldChanged()"></div>
+          <div class="field"><label for="setupSchool" id="setupSchoolLabel">School</label><input id="setupSchool" placeholder="De La Salle University - Dasmariñas" oninput="onSetupFieldChanged()"></div>
+          <div class="setup-academic-only">
+            <div class="field"><label for="setupDept">Department</label><select id="setupDept" onchange="onSetupDeptChanged()"><option value="any">Select a department</option></select></div>
+            <div class="field"><label for="setupProgram">Course / Program</label><select id="setupProgram" onchange="onSetupFieldChanged()" disabled><option value="">Select a department first</option></select></div>
+            <div class="field"><label for="setupYear">Year level</label><select id="setupYear" onchange="onSetupFieldChanged()"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
+          </div>
+          <div class="field"><label for="setupLocation">Location</label><input id="setupLocation" placeholder="Dasmariñas, Cavite" oninput="onSetupFieldChanged()"></div>
+          <div class="field"><label for="setupBio">Bio</label><input id="setupBio" placeholder="Aspiring web developer with a passion for UI/UX." oninput="onSetupFieldChanged()"></div>
+          <div class="field"><label for="setupSkills">Skills (comma-separated)</label><input id="setupSkills" placeholder="JavaScript, UI / UX, Git" list="setupSkillsList" oninput="onSetupFieldChanged()"><datalist id="setupSkillsList"></datalist></div>
+          <div class="setup-suggest" id="setupSkillSuggest"></div>
+        </div>
+        <p class="section-title">Portfolio &amp; documents</p>
+        <p class="sub mb-8">Prototype demo — only the file name is saved on this device.</p>
+        <div class="doclist" id="setupDocList">
+          <div class="doc-card" onclick="setupDocUpload('resume')"><div>Resume / CV <span class="doc-status pending" id="setupDocResume">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+          <div class="doc-card" onclick="setupDocUpload('portfolio')"><div>Project portfolio <span class="doc-status pending" id="setupDocPortfolio">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+          <div class="doc-card" onclick="setupDocUpload('endorsement')"><div>School endorsement <span class="doc-status pending" id="setupDocEndorsement">Not uploaded</span></div><span class="material-icons-outlined">upload</span></div>
+        </div>
+        <button class="btn-primary" id="setupSaveBtn" onclick="saveProfileSetup()">Save and continue</button>
+        <button class="btn-secondary" id="setupLaterBtn" onclick="skipProfileSetup()">Set up later</button>
+        <p class="sub setup-name-hint" id="setupNameHint">Enter your full name above to unlock saving — the rest can wait.</p>
+      </section>
+
       <!-- SCREEN: DASHBOARD -->
       <section class="screen" id="screen-dashboard">
         <div class="dash-header">
@@ -152,9 +187,16 @@
           <button class="dash-notif" aria-label="Notifications" onclick="showScreen('notifications')"><span class="material-icons-outlined">notifications</span><span class="notif-dot"></span></button>
         </div>
         <p class="greeting-text">Hello,</p>
-        <h2 class="user-name" id="dashName">Juan Dela Cruz</h2>
+        <h2 class="user-name" id="dashName">New member</h2>
         <div class="user-role-badge" id="dashRoleBadge"><span class="material-icons-outlined">school</span><span id="dashRoleText">Student</span></div>
         <div class="user-location"><span class="material-icons-outlined">location_on</span>Dasmariñas, Cavite</div>
+
+        <div class="setup-nudge hidden" id="profileSetupNudge">
+          <div class="setup-nudge-icon"><span class="material-icons-outlined">person_add</span></div>
+          <div class="setup-nudge-body"><strong id="setupNudgeTitle">Complete your profile</strong><span id="setupNudgeSub">Add your school, skills, and documents to get better matches.</span></div>
+          <button class="setup-nudge-cta" onclick="openProfileSetup()">Resume</button>
+          <button class="setup-nudge-dismiss" onclick="dismissSetupNudge()" aria-label="Dismiss profile setup reminder"><span class="material-icons-outlined">close</span></button>
+        </div>
 
         <div class="deadline-badge student-only"><span class="material-icons-outlined">timer</span><span id="deadlineText">45 days until OJT deadline</span></div>
 
@@ -186,7 +228,7 @@
           <div class="stat-card"><span class="stat-value">87%</span><span class="stat-label">Average Skill Match</span></div>
           <div class="stat-card"><span class="stat-value">12</span><span class="stat-label">Nearby Matches</span></div>
           <div class="stat-card"><span class="stat-value" id="dashHours">400</span><span class="stat-label">Required OJT Hours</span></div>
-          <div class="stat-card"><span class="stat-value" id="dashApps">30</span><span class="stat-label">Applications Submitted</span></div>
+          <div class="stat-card"><span class="stat-value" id="dashApps">0</span><span class="stat-label">Applications Submitted</span></div>
         </div>
         <p class="section-label">Proximity Map</p>
         <div class="dash-map-wrap" role="button" tabindex="0" aria-label="Open full matches map" onclick="showScreen('matches')" onkeydown="if(event.key==='Enter')showScreen('matches')">
@@ -370,22 +412,22 @@
       <section class="screen" id="screen-profile">
         <h2 class="scr-title">My Profile</h2>
         <div class="profile-head">
-          <div class="avatar">JD</div>
+          <div class="avatar">?</div>
           <div>
-            <h3 style="font-size:16px;font-weight:700;margin-bottom:2px">Juan Dela Cruz</h3>
-            <p class="meta" style="font-size:12px;color:var(--muted);margin-bottom:4px">BS Information Technology • 3rd Year</p>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:2px">Not set up yet</h3>
+            <p class="meta" style="font-size:12px;color:var(--muted);margin-bottom:4px">No details added yet</p>
             <span class="verified"><span class="material-icons-outlined" style="font-size:14px">verified</span> Verified</span>
           </div>
         </div>
         <div class="settings-item profile-theme-row"><div><div class="settings-item-label">Dark mode</div><div class="settings-item-sub">Easier on the eyes at night</div></div><button class="toggle-switch" id="profileThemeSwitch" onclick="toggleTheme()" aria-label="Toggle dark mode"></button></div>
-        <div class="match-breakdown"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span>80%</span></div><div class="bar-bg"><div class="bar-fill" style="width:80%"></div></div></div><p class="sub mt-8">Upload your school endorsement to reach 100%.</p></div>
+        <div class="match-breakdown"><div class="bar-row"><div class="lbl"><span>Profile strength</span><span id="profileStrengthPct">0%</span></div><div class="bar-bg"><div class="bar-fill" id="profileStrengthBar" style="width:0%"></div></div></div><p class="sub mt-8" id="profileStrengthNote">Complete profile setup to build your strength.</p></div>
         <p class="section-title">Skills</p>
-        <div class="mb-16"><span class="chip">HTML / CSS</span><span class="chip">JavaScript</span><span class="chip">Git</span><span class="chip">UI / UX</span><span class="chip">Database</span></div>
+        <div class="mb-16"><span class="sub">No skills added yet — add them in profile setup.</span></div>
         <p class="section-title">Portfolio & documents</p>
         <div class="doclist">
           <div class="doc-card" onclick="handleDocUpload('resume')"><div>Resume / CV <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
           <div class="doc-card" onclick="handleDocUpload('portfolio')"><div>Project portfolio <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
-          <div class="doc-card" onclick="handleDocUpload('endorsement')"><div>School endorsement <span class="doc-status uploaded">Ready</span></div><span class="material-icons-outlined">chevron_right</span></div>
+          <div class="doc-card" onclick="handleDocUpload('endorsement')"><div>School endorsement <span class="doc-status pending">Not uploaded</span></div><span class="material-icons-outlined">chevron_right</span></div>
         </div>
         <button class="btn-secondary mt-16" onclick="openEditProfile()">Edit profile</button>
         <button class="btn-secondary" onclick="signOut()">Sign out</button>
@@ -429,7 +471,7 @@
         </div>
         <div class="settings-group">
           <h3>Account</h3>
-          <div class="settings-item" onclick="showToast('Change email coming soon','info')"><div><div class="settings-item-label">Email</div><div class="settings-item-sub">juan.delacruz@gmail.com</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
+          <div class="settings-item" onclick="showToast('Change email coming soon','info')"><div><div class="settings-item-label">Email</div><div class="settings-item-sub" id="settingsEmailSub">juan.delacruz@gmail.com</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
           <div class="settings-item" onclick="showToast('Change password coming soon','info')"><div><div class="settings-item-label">Password</div><div class="settings-item-sub">Last changed 3 months ago</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
           <div class="settings-item" onclick="showToast('Language: English','info')"><div><div class="settings-item-label">Language</div><div class="settings-item-sub">English</div></div><span class="material-icons-outlined" style="color:var(--muted-light)">chevron_right</span></div>
         </div>
@@ -455,13 +497,13 @@
         <button class="back-btn" onclick="showScreen('profile')"><span class="material-icons-outlined">arrow_back</span> Back</button>
         <h2 class="scr-title">Edit Profile</h2>
         <div class="edit-form">
-          <div class="field"><label>Full name</label><input id="editName" value="Juan Dela Cruz"></div>
-          <div class="field"><label>Course / Program</label><input id="editCourse" value="BS Information Technology"></div>
-          <div class="field"><label>Year level</label><select id="editYear"><option>1st Year</option><option>2nd Year</option><option selected>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
-          <div class="field"><label>School</label><input id="editSchool" value="De La Salle University - Dasmariñas"></div>
-          <div class="field"><label>Location</label><input id="editLocation" value="Dasmariñas, Cavite"></div>
-          <div class="field"><label>Bio</label><input id="editBio" value="Aspiring web developer with a passion for UI/UX and clean code."></div>
-          <div class="field"><label>Skills (comma-separated)</label><input id="editSkills" value="HTML / CSS, JavaScript, Git, UI / UX, Database"></div>
+          <div class="field"><label>Full name</label><input id="editName" placeholder="Your full name"></div>
+          <div class="field"><label>Course / Program</label><input id="editCourse" placeholder="e.g. BS Information Technology"></div>
+          <div class="field"><label>Year level</label><select id="editYear"><option value="">Select year level</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>5th Year</option></select></div>
+          <div class="field"><label>School</label><input id="editSchool" placeholder="Your school"></div>
+          <div class="field"><label>Location</label><input id="editLocation" placeholder="City, Province"></div>
+          <div class="field"><label>Bio</label><input id="editBio" placeholder="A short line about you"></div>
+          <div class="field"><label>Skills (comma-separated)</label><input id="editSkills" placeholder="e.g. JavaScript, UI / UX, Git"></div>
           <button class="btn-primary" onclick="saveProfile()">Save changes</button>
         </div>
       </section>
