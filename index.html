@@ -236,7 +236,8 @@
         <p class="section-label" id="dashListTitle">Recommended</p>
         <div id="dashList"></div>
         <button class="btn-primary mt-8 student-only" onclick="showScreen('matches')">View all matches</button>
-        <button class="btn-secondary" onclick="showScreen('messages')">Open messages</button>
+        <button class="btn-secondary" id="dashboardMessagesAction" onclick="showScreen('messages')">Open messages</button>
+        <button class="btn-secondary" id="dashboardRecordsAction" onclick="showScreen('applications')">My applications</button>
         <button class="btn-secondary student-only" onclick="showScreen('ojtLog')">Log OJT hours</button>
         <p class="section-label">Community</p>
         <div class="dash-community-composer" onclick="showScreen('post')" role="button" tabindex="0" aria-label="Share an update" onkeydown="if(event.key==='Enter')showScreen('post')"><div class="message-avatar"><span class="material-icons-outlined" style="font-size:18px">edit_note</span></div><span>Share an update…</span><span class="material-icons-outlined">photo_camera</span></div>
@@ -349,8 +350,8 @@
 
       <!-- SCREEN: APPLICATIONS -->
       <section class="screen" id="screen-applications">
-        <h2 class="scr-title">My Applications</h2>
-        <p class="sub mb-16">Tap an application to review the role and your match.</p>
+        <h2 class="scr-title" id="applicationsTitle">My Applications</h2>
+        <p class="sub mb-16" id="applicationsIntro">Tap an application to review the role and your match.</p>
         <div id="appList"></div>
         
         
@@ -358,8 +359,9 @@
 
       <!-- SCREEN: MESSAGES -->
       <section class="screen" id="screen-messages">
-        <h2 class="scr-title">Messages</h2>
-        <div class="searchbar"><input placeholder="Search chats…" aria-label="Search chats" oninput="msgQuery=this.value.toLowerCase();renderMessages()"></div>
+        <h2 class="scr-title" id="messagesTitle">Messages with employers</h2>
+        <p class="sub mb-16" id="messagesIntro">Chat with companies about your applications.</p>
+        <div class="searchbar"><input id="messagesSearch" placeholder="Search employers…" aria-label="Search chats" oninput="msgQuery=this.value.toLowerCase();renderMessages()"></div>
         <div class="message-list" id="messageList">
           <div class="message-card unread">
             <div class="message-avatar">GC</div>

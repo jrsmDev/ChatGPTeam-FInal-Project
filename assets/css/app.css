@@ -276,8 +276,12 @@ body{background:radial-gradient(120% 90% at 50% 0%,#2D5A3D 0%,#14281c 55%,#0c1a1
 .toggle-btn{padding:10px;border-radius:11px;font-size:13px}
 #screen-matches.map-mode #matchControls{display:none}
 #screen-matches:not(.map-mode) #matchMapView{display:none}
-#screen-matches:not(.map-mode) #matchControls{display:block}
-#screen-matches:not(.map-mode) #matchListView{display:block}
+#screen-matches:not(.map-mode) #matchControls:not(.hidden){display:block}
+#screen-matches:not(.map-mode) #matchListView:not(.hidden){display:block}
+#screen-matches:not(.student-role) .view-toggle,
+#screen-matches:not(.student-role) #matchControls,
+#screen-matches:not(.student-role) #matchListView,
+#screen-matches:not(.student-role) #matchMapView{display:none!important}
 #matchControls .searchbar{margin-bottom:12px}
 #matchControls .filter-row:last-child{margin-bottom:12px}
 .map-tools{position:absolute;z-index:8;top:12px;left:12px;right:12px;display:flex;gap:9px;align-items:center}

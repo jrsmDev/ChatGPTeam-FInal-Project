@@ -89,6 +89,37 @@ let applications=JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS));
 let saved=new Set(), currentMatchId=null;
 const OJT_REQUIRED=400;let pendingHours=8, approvedHours=120;const remainingHours=()=>Math.max(0,OJT_REQUIRED-approvedHours-pendingHours);
 let selectedRole=null, selectedPurpose=[];
+const ROLE_STATE_PREFIX='internlink_state_v3_';
+const ROLE_FEED_PREFIX='internlink_feed_v2_';
+const ACTIVE_ROLE_KEY='internlink_active_role';
+function roleStateKey(role){return ROLE_STATE_PREFIX+role}
+function roleFeedKey(role){return ROLE_FEED_PREFIX+role}
+function roleThemeKey(role){return 'internlink_theme_'+role}
+function applyRoleTheme(role){
+  let dark=false;
+  try{dark=localStorage.getItem(roleThemeKey(role))==='dark'}catch(e){}
+  document.getElementById('phone')?.classList.toggle('dark',dark);
+  document.getElementById('profileThemeSwitch')?.classList.toggle('on',dark);
+}
+function resetRoleState(role){
+  selectedRole=role;
+  selectedPurpose=[];
+  isDemoAccount=false;
+  profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
+  applications=role==='student'?JSON.parse(JSON.stringify(DEFAULT_APPLICATIONS)):[];
+  saved=new Set();followed=new Set();openThreads=new Set();
+  pendingHours=role==='student'?8:0;approvedHours=role==='student'?120:0;
+  ojtLogs=role==='student'?JSON.parse(JSON.stringify(DEFAULT_OJT_LOGS)):[];
+  filters={dist:35,match:70,skill:'any',program:'any',course:'any'};
+  userLocation={lat:14.3294,lng:120.9366,label:'Dasmariñas, Cavite'};
+  NOTIFICATIONS=JSON.parse(JSON.stringify(ROLE_DEFAULT_NOTIFICATIONS?.[role]||[]));
+  if(typeof POSTS!=='undefined') POSTS.splice(0,POSTS.length,...JSON.parse(JSON.stringify(DEFAULT_POSTS)));
+  if(typeof DEFAULT_MESSAGE_THREADS!=='undefined') messageThreads=JSON.parse(JSON.stringify(DEFAULT_MESSAGE_THREADS[role]||[]));
+  if(typeof DEFAULT_CHAT_HISTORIES!=='undefined') CHAT_HISTORY=JSON.parse(JSON.stringify(DEFAULT_CHAT_HISTORIES[role]||{}));
+  if(typeof msgQuery!=='undefined') msgQuery='';
+  currentChat=null;
+  mapRefit=true;
+}
 
 /* ═══ Demo account (pre-made; credentials are NEVER stored) ═══ */
 const DEMO_ACCOUNT_EMAIL='juan.delacruz@gmail.com';
@@ -133,7 +164,9 @@ const PURPOSE_OPTIONS={
 };
 
 function selectRole(role,el){
-  selectedRole=role;
+  resetRoleState(role);
+  loadState(role);
+  applyRoleTheme(role);
   document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('roleNextBtn').disabled=false;
@@ -150,13 +183,15 @@ function renderPurposeOptions(){
   grid.classList.add('checklist');
   grid.setAttribute('role','group');
   grid.setAttribute('aria-label',cfg.title+' — checklist, select all that apply');
-  grid.innerHTML=cfg.options.map(opt=>`
-    <div class="purpose-card" role="checkbox" tabindex="0" aria-checked="false" data-purpose="${opt.id}" onclick="selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)}">
+  grid.innerHTML=cfg.options.map(opt=>{
+    const selected=selectedPurpose.some(p=>p.id===opt.id);
+    return `
+    <div class="purpose-card${selected?' selected':''}" role="checkbox" tabindex="0" aria-checked="${selected}" data-purpose="${opt.id}" onclick="selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();selectPurpose('${opt.id}','${opt.title.replace(/'/g,"\\'")}',this)}">
       <div class="purpose-icon"><span class="material-icons-outlined">${opt.icon}</span></div>
       <div class="purpose-info"><h3>${opt.title}</h3><p>${opt.desc}</p></div>
       <div class="purpose-check" aria-hidden="true"><span class="material-icons-outlined">check</span></div>
-    </div>`).join('');
-  selectedPurpose=[];
+    </div>`;
+  }).join('');
   updatePurposeButton();
 }
 
@@ -668,6 +703,12 @@ function toggleSaveFor(id,button){
   saveState();
 }
 function renderMap(list){
+  const mapElement=document.getElementById('realMap');
+  if(!mapElement) return;
+  const bounds=mapElement.getBoundingClientRect();
+  // Leaflet caches the container size at construction. Wait until the Matches
+  // screen and map view are visible so the first render never starts at 0x0.
+  if(!bounds.width||!bounds.height) return;
   if(!mapsReady){initLocationMaps();return}
   try{miniMap.invalidateSize()}catch(e){}
   updateMapMarkers(list);
@@ -754,11 +795,25 @@ function submitApplication(){
   showScreen('applications');
 }
 
-const messageThreads=[
+const DEFAULT_STUDENT_MESSAGES=[
   {name:'GCash',preview:'Thanks for applying — we’d love to set up a quick intro call.',time:'2m',unread:1,initials:'GC'},
   {name:'IBM Philippines',preview:'Your profile matches the AI/ML internship brief. Can you share your portfolio?',time:'1h',unread:0,initials:'IB'},
   {name:'SM Prime',preview:'We’ve reviewed your application and would like to schedule an interview.',time:'Yesterday',unread:0,initials:'SM'}
 ];
+const DEFAULT_MESSAGE_THREADS={
+  student:DEFAULT_STUDENT_MESSAGES,
+  employer:[
+    {name:'Maria Lopez',preview:'I’m available for an interview this week.',time:'12m',unread:1,initials:'ML'},
+    {name:'Paolo Garcia',preview:'I’ve attached my updated portfolio.',time:'1h',unread:1,initials:'PG'},
+    {name:'Kyla Mendoza',preview:'Thank you for reviewing my application.',time:'Yesterday',unread:0,initials:'KM'}
+  ],
+  school:[
+    {name:'Maria Lopez',preview:'My supervisor approved this week’s hours.',time:'18m',unread:1,initials:'ML'},
+    {name:'GCash',preview:'We can take two more OJT students this term.',time:'2h',unread:1,initials:'GC'},
+    {name:'Accenture',preview:'The placement agreement is ready for review.',time:'Yesterday',unread:0,initials:'AC'}
+  ]
+};
+let messageThreads=JSON.parse(JSON.stringify(DEFAULT_MESSAGE_THREADS.student));
 function renderMessages(){
   const box=document.getElementById('messageList');
   if(!box) return;
@@ -875,23 +930,36 @@ function animateDashboard() {
 
 /* ═══ localStorage Persistence ═══ */
 function saveState() {
+  if(!['student','school','employer'].includes(selectedRole)) return;
   try {
     const state = {
       selectedRole, selectedPurpose, profileSetup, isDemoAccount,
       applications, saved: [...saved], followed: [...followed],
-      pendingHours, approvedHours, ojtLogs, filters, userLocation,
-      notifications: NOTIFICATIONS
+      openThreads:[...openThreads],pendingHours, approvedHours, ojtLogs, filters, userLocation,
+      notifications: NOTIFICATIONS,messageThreads,chatHistory:CHAT_HISTORY
     };
-    localStorage.setItem('internlink_state_v2', JSON.stringify(state));
+    localStorage.setItem(roleStateKey(selectedRole), JSON.stringify(state));
+    localStorage.setItem(ACTIVE_ROLE_KEY,selectedRole);
   } catch(e) {}
 }
 
-function loadState() {
+function loadState(roleHint=null) {
   try {
-    const raw = localStorage.getItem('internlink_state_v2');
-    if (!raw) return false;
+    let legacy=null;
+    try{legacy=JSON.parse(localStorage.getItem('internlink_state_v2')||'null')}catch(e){}
+    let role=roleHint;
+    if(!role){
+      role=localStorage.getItem(ACTIVE_ROLE_KEY);
+      if(!['student','school','employer'].includes(role)) role=legacy?.selectedRole;
+    }
+    if(!['student','school','employer'].includes(role)) return false;
+    resetRoleState(role);
+    const roleRaw=localStorage.getItem(roleStateKey(role));
+    const useLegacy=!roleRaw&&legacy?.selectedRole===role;
+    const raw=roleRaw||(useLegacy?JSON.stringify(legacy):null);
+    if(!raw) return false;
     const state = JSON.parse(raw);
-    if (state.selectedRole) selectedRole = state.selectedRole;
+    selectedRole=role;
     if (Array.isArray(state.selectedPurpose)) selectedPurpose = state.selectedPurpose.filter(p=>p&&p.id&&p.title);
     else if (state.selectedPurpose&&state.selectedPurpose.id) selectedPurpose = [{id:state.selectedPurpose.id,title:state.selectedPurpose.title}];
     if (typeof state.isDemoAccount==='boolean') isDemoAccount = state.isDemoAccount;
@@ -899,7 +967,10 @@ function loadState() {
     if (Array.isArray(state.notifications)) NOTIFICATIONS = state.notifications;
     if (state.saved) saved = new Set(state.saved);
     if (state.followed) followed = new Set(state.followed);
-    restoreFeed();
+    if(Array.isArray(state.openThreads)) openThreads=new Set(state.openThreads);
+    if(Array.isArray(state.messageThreads)) messageThreads=state.messageThreads;
+    if(state.chatHistory&&typeof state.chatHistory==='object') CHAT_HISTORY=state.chatHistory;
+    restoreFeed(useLegacy);
     if (state.pendingHours != null) pendingHours = state.pendingHours;
     if (state.approvedHours != null) approvedHours = state.approvedHours;
     if (Array.isArray(state.ojtLogs)) ojtLogs = state.ojtLogs;
@@ -920,7 +991,7 @@ function loadState() {
       const ps=state.profileSetup;
       profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false,...ps,docs:{resume:null,portfolio:null,endorsement:null,...(ps.docs||{})}};
     }
-    
+    if(useLegacy){saveState();try{localStorage.removeItem('internlink_state_v2')}catch(e){}}
     return !!state.selectedRole;
   } catch(e) { return false; }
 }
@@ -998,10 +1069,31 @@ updateDashboardForRole=function(){
     workNav.setAttribute('aria-label',label);
     document.getElementById('roleWorkIcon').textContent=icon;
   }
+  const messagesNav=document.querySelector('.navbtn[data-nav="messages"]');
+  if(messagesNav) messagesNav.setAttribute('aria-label',role==='student'?'Employer messages':role==='employer'?'Applicant messages':'Placement messages');
+  const recordsAction=document.getElementById('dashboardRecordsAction');
+  if(recordsAction) recordsAction.textContent=role==='student'?'My applications':role==='employer'?'Review applicants':'Review placements';
+  const messagesAction=document.getElementById('dashboardMessagesAction');
+  if(messagesAction) messagesAction.textContent=role==='student'?'Message employers':role==='employer'?'Message applicants':'Message partners';
+  const dashListTitle=document.getElementById('dashListTitle');
+  if(dashListTitle) dashListTitle.textContent=role==='student'?'Recommended':role==='employer'?'Top applicants':'Placement queue';
+  const recordsTitle=document.querySelector('#screen-applications .scr-title');
+  if(recordsTitle) recordsTitle.textContent=role==='student'?'My Applications':role==='employer'?'Applicants':'Placement Reviews';
+  const postTitle=document.querySelector('#screen-post .scr-title');
+  if(postTitle) postTitle.textContent=role==='student'?'Create post':role==='employer'?'Share a hiring update':'Share a placement update';
+  const postHeading=document.querySelector('#screen-post .composer-head h3');
+  const postAvatar=document.querySelector('#screen-post .composer-head .avatar');
+  const displayName=(profileSetup.name||'').trim()||(isDemoAccount?'Juan Dela Cruz':role==='employer'?'New employer':role==='school'?'School coordinator':'New student');
+  const initials=displayName.split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase();
+  if(postHeading) postHeading.textContent=displayName;
+  if(postAvatar) postAvatar.textContent=initials||'YO';
+  const postInput=document.getElementById('postText');
+  if(postInput) postInput.placeholder=role==='student'?'What are you looking for, sharing, or asking for help with?':role==='employer'?'Share an internship opening or hiring update.':'Share a placement or OJT update.';
   const roleTitle=document.querySelector('#screen-matches .scr-title');
   const roleIntro=document.querySelector('#screen-matches .matches-intro');
   const roleWorkView=document.getElementById('roleWorkView');
   const student=role==='student';
+  document.getElementById('screen-matches')?.classList.toggle('student-role',student);
   if(roleTitle) roleTitle.textContent=student?'Matched Internships':role==='employer'?'Candidate Directory':'Placement Reviews';
   if(roleIntro) roleIntro.textContent=student?'Opportunities for every student. Find a fit for your course, skills, and goals.':role==='employer'?'Review student profiles whose skills align with your internship openings.':'Review placement requests, student hour logs, and company partnership documents.';
   ['.view-toggle','#matchControls','#matchListView','#matchMapView'].forEach(sel=>{const el=document.querySelector('#screen-matches '+sel);if(el)el.classList.toggle('hidden',!student)});
@@ -1054,6 +1146,18 @@ openDetails=function(id){
 const STAGES=['Submitted','Reviewed','Interview','Accepted'],STAGE_N={submitted:1,review:2,interview:3,accepted:4};
 renderApplications=function(){
   const box=document.getElementById('appList');
+  const role=selectedRole||'student';
+  const title=document.getElementById('applicationsTitle'),intro=document.getElementById('applicationsIntro');
+  if(role!=='student'){
+    const employer=role==='employer';
+    if(title) title.textContent=employer?'Applicants':'Placement Reviews';
+    if(intro) intro.textContent=employer?'Review students who applied to your internship openings.':'Review student placements, hour logs, and company partnership requests.';
+    const records=ROLE_LISTS[role]||[];
+    box.innerHTML=records.map((item,index)=>'<article class="rec-card"><div class="rec-top"><h3>'+escapeHTML(item.n)+'</h3><span class="rec-score">'+escapeHTML(item.tag)+'</span></div><p class="rec-meta">'+escapeHTML(item.sub)+'</p><div class="rec-skills-list">'+item.chips.map(chip=>'<span class="chip">'+escapeHTML(chip)+'</span>').join('')+'</div><button class="rec-link" onclick="handleRoleCardAction(\''+(employer?'view':index===0?'endorse':index===1?'approve':'review')+'\')">'+(employer?'View applicant':index===0?'Review endorsement':index===1?'Approve hours':'Review request')+'</button></article>').join('');
+    return;
+  }
+  if(title) title.textContent='My Applications';
+  if(intro) intro.textContent='Tap an application to review the role and your match.';
   if(!applications.length){box.innerHTML='<div class="empty-state"><div class="empty-state-icon"><span class="material-icons-outlined">work_outline</span></div><h3>No applications yet</h3><p>Apply to a match and track every stage here.</p><button class="btn-primary" onclick="showScreen(\'matches\')">Browse matches</button></div>';return}
   box.innerHTML=applications.map(a=>{
     const n=STAGE_N[a.status]||1;
@@ -1063,6 +1167,14 @@ renderApplications=function(){
 
 renderMessages=function(){
   const box=document.getElementById('messageList');if(!box) return;
+  const role=selectedRole||'student';
+  const labels={student:['Messages with employers','Chat with companies about your applications.','Search employers…'],employer:['Applicant messages','Talk with students applying to your openings.','Search applicants…'],school:['Placement messages','Coordinate placements with students and partner companies.','Search students or companies…']};
+  const [title,subtitle,placeholder]=labels[role]||labels.student;
+  const titleEl=document.getElementById('messagesTitle'),subtitleEl=document.getElementById('messagesIntro');
+  const search=document.getElementById('messagesSearch');
+  if(titleEl) titleEl.textContent=title;
+  if(subtitleEl) subtitleEl.textContent=subtitle;
+  if(search){search.placeholder=placeholder;if(search.value!==msgQuery)search.value=msgQuery}
   if(!box.dataset.chatHandlersBound){
     box.addEventListener('click',event=>{
       const card=event.target.closest('[data-chat-name]');
@@ -1077,7 +1189,7 @@ renderMessages=function(){
   const list=messageThreads.filter(t=>!msgQuery||(t.name+' '+t.preview).toLowerCase().includes(msgQuery));
   box.innerHTML=list.length?list.map(t=>'<div class="message-card'+(t.unread?' unread':'')+'" data-chat-name="'+escapeHTML(t.name)+'" role="button" tabindex="0"><div class="message-avatar">'+escapeHTML(t.initials)+'</div><div class="message-content"><div class="message-top"><strong>'+escapeHTML(t.name)+'</strong><span class="message-time">'+escapeHTML(t.time)+'</span></div><div class="message-preview">'+escapeHTML(t.preview)+'</div></div>'+(t.unread?'<div class="message-pill">'+escapeHTML(String(t.unread))+'</div>':'')+'</div>').join(''):'<p class="sub">No chats match your search.</p>';
 };
-function readThread(name){const t=messageThreads.find(x=>x.name===name);if(t)t.unread=0;renderMessages();openChat(name)}
+function readThread(name){const t=messageThreads.find(x=>x.name===name);if(t)t.unread=0;renderMessages();openChat(name);saveState()}
 
 function onPostInput(t){document.getElementById('postBtn').disabled=!t.value.trim();document.getElementById('postCount').textContent=t.value.length+' / 280'}
 let pendingPhotoUrl=null;
@@ -1103,7 +1215,7 @@ function clearPendingPhoto(){
 function setAuthMode(m){
   return internLinkApp.auth.setMode(m);
 }
-function signOut(){try{localStorage.removeItem('internlink_state_v2')}catch(e){}location.reload()}
+function signOut(){try{localStorage.removeItem(ACTIVE_ROLE_KEY);localStorage.removeItem('internlink_state_v2')}catch(e){}location.reload()}
 
 /* ═══ XSS Protection ═══ */
 function escapeHTML(str){const d=document.createElement('div');d.textContent=str;return d.innerHTML}
@@ -1114,7 +1226,7 @@ function closeModal(id){internLinkApp.overlays.setOpen(id,false)}
 function submitForgotPassword(){const input=document.getElementById('forgotEmail');if(!input.checkValidity()){input.reportValidity();return}closeModal('forgotModal');showToast('Prototype demo — no password reset email was sent.','info')}
 
 /* ═══ Chat System ═══ */
-const CHAT_HISTORY={
+const DEFAULT_STUDENT_CHAT_HISTORY={
   'GCash':[
     {from:'them',text:'Hi Juan! Thanks for applying to the Frontend Developer Intern role.',time:'10:30 AM'},
     {from:'them',text:'We reviewed your profile and would love to set up a quick intro call.',time:'10:31 AM'},
@@ -1130,6 +1242,20 @@ const CHAT_HISTORY={
     {from:'them',text:'Are you available next week? We have slots on Tuesday and Wednesday.',time:'Yesterday'}
   ]
 };
+const DEFAULT_CHAT_HISTORIES={
+  student:DEFAULT_STUDENT_CHAT_HISTORY,
+  employer:{
+    'Maria Lopez':[{from:'them',text:'Thank you for considering my application. I’m available for an interview this week.',time:'10:12 AM'},{from:'me',text:'Thanks, Maria. I’ll send available times shortly.',time:'10:20 AM'}],
+    'Paolo Garcia':[{from:'them',text:'I’ve attached my updated portfolio for the frontend role.',time:'9:30 AM'}],
+    'Kyla Mendoza':[{from:'them',text:'Thank you for reviewing my application.',time:'Yesterday'}]
+  },
+  school:{
+    'Maria Lopez':[{from:'them',text:'My supervisor approved this week’s hours. Can you review my log?',time:'9:45 AM'}],
+    'GCash':[{from:'them',text:'We can take two more OJT students this term. Please send the placement requirements.',time:'8:30 AM'}],
+    'Accenture':[{from:'them',text:'The placement agreement is ready for your review.',time:'Yesterday'}]
+  }
+};
+let CHAT_HISTORY=JSON.parse(JSON.stringify(DEFAULT_CHAT_HISTORIES.student));
 let currentChat=null,chatReturnScreen='messages';
 function openChat(name,returnScreen='messages'){
   currentChat=name;
@@ -1151,6 +1277,7 @@ function openChat(name,returnScreen='messages'){
     : '<div class="chat-empty-state"><span class="material-icons-outlined" aria-hidden="true">chat_bubble_outline</span><strong>Start the conversation</strong><span>Send '+escapeHTML(name)+' a message.</span></div>';
   box.scrollTop=box.scrollHeight;
   if(thread)thread.unread=0;
+  saveState();
   showScreen('chat');
 }
 function closeChat(){showScreen(chatReturnScreen)}
@@ -1164,12 +1291,15 @@ function sendChatMessage(){
   CHAT_HISTORY[recipient].push({from:'me',text:text,time:now});
   const thread=messageThreads.find(item=>item.name===recipient);
   if(thread){thread.preview=text;thread.time='Now'}
+  saveState();
   const box=document.getElementById('chatMessages');
   box.querySelector('.chat-empty-state')?.remove();
   box.insertAdjacentHTML('beforeend','<div class="chat-bubble me">'+escapeHTML(text)+'<span class="time">'+now+'</span></div>');
   box.scrollTop=box.scrollHeight;
   input.value='';
+  const roleAtSend=selectedRole,historyAtSend=CHAT_HISTORY,threadsAtSend=messageThreads;
   setTimeout(()=>{
+    if(selectedRole!==roleAtSend||CHAT_HISTORY!==historyAtSend||messageThreads!==threadsAtSend) return;
     const replies=['Thanks for the update! We will get back to you shortly.','Sounds good! Let me check with the team.','Perfect, we will send the details soon.','Great, looking forward to it!'];
     const reply=replies[Math.floor(Math.random()*replies.length)];
     CHAT_HISTORY[recipient].push({from:'them',text:reply,time:now});
@@ -1179,6 +1309,7 @@ function sendChatMessage(){
     }
     const activeThread=messageThreads.find(item=>item.name===recipient);
     if(activeThread){activeThread.preview=reply;activeThread.time='Now'}
+    saveState();
   },1200+Math.random()*1500);
 }
 
@@ -1190,6 +1321,17 @@ const DEFAULT_NOTIFICATIONS=[
   {id:'n-view-ibm',icon:'thumb_up',color:'green',title:'Profile viewed',desc:'IBM Philippines viewed your profile',time:'Yesterday',unread:false,screen:'details',matchId:'m3'},
   {id:'n-endorsement',icon:'description',color:'blue',title:'Endorsement ready',desc:'Your school endorsement letter is ready for download',time:'2d',unread:false,screen:'profile'}
 ];
+const ROLE_DEFAULT_NOTIFICATIONS={
+  student:DEFAULT_NOTIFICATIONS,
+  employer:[
+    {id:'e-applicant-maria',icon:'person_add',color:'green',title:'New applicant',desc:'Maria Lopez applied for Frontend Developer Intern',time:'12m',unread:true,screen:'applications'},
+    {id:'e-interview-paolo',icon:'event',color:'blue',title:'Interview reminder',desc:'Paolo Garcia is scheduled for an interview tomorrow',time:'2h',unread:false,screen:'applications'}
+  ],
+  school:[
+    {id:'s-hours-mark',icon:'schedule',color:'orange',title:'Hours log needs review',desc:'Mark Bautista submitted 8 OJT hours',time:'18m',unread:true,screen:'applications'},
+    {id:'s-moa-accenture',icon:'description',color:'blue',title:'Partnership request',desc:'Accenture submitted a placement agreement',time:'1h',unread:false,screen:'applications'}
+  ]
+};
 let NOTIFICATIONS=JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
 function updateNotifDot(){
   const dot=document.querySelector('.dash-notif .notif-dot');
@@ -1233,12 +1375,13 @@ function renderNotifications(){
 }
 
 /* ═══ Post Feed ═══ */
-const POSTS=[
+const DEFAULT_POSTS=[
   {name:'Maria Lopez',ini:'ML',time:'2h ago',text:'Just finished my OJT at GCash! 400 hours complete. Thank you InternLink for the match!',likes:24,comments:5,liked:false,thread:[{by:'Paolo Garcia',ini:'PG',text:'Congrats! Which team were you on?',time:'1h ago'},{by:'Maria Lopez',ini:'ML',text:'Web platform team — learned so much about React!',time:'45m ago'}]},
   {name:'Prof. Ramon Cruz',ini:'RC',time:'5h ago',text:'Reminder: All 3rd year IT students must submit their OJT placement forms by Friday. See me if you need help finding a placement.',likes:18,comments:3,liked:false,thread:[]},
   {name:'Paolo Garcia',ini:'PG',time:'1d ago',text:'Anyone have tips for a frontend developer interview? I have one coming up at IBM Philippines next week!',likes:12,comments:8,liked:true,thread:[{by:'Kyla Mendoza',ini:'KM',text:'Review your portfolio pieces and practice explaining your code out loud. Good luck!',time:'20h ago'}]},
   {name:'GCash',ini:'GC',time:'2d ago',text:'We are hiring 5 more interns for 2026! Frontend, data, and AI roles across BGC and Ortigas. Apply through InternLink.',likes:45,comments:12,liked:false,thread:[]}
 ];
+const POSTS=JSON.parse(JSON.stringify(DEFAULT_POSTS));
 let followed=new Set(),openThreads=new Set();
 let communityFeedFrom='dashboard';
 function openCommunityFeed(from='dashboard'){
@@ -1411,16 +1554,18 @@ function renderPostCommunity(){
   bindCommunityProfileLinks(box);
 }
 function persistFeed(){
-  try{localStorage.setItem('internlink_feed_v1',JSON.stringify(POSTS.map(p=>({name:p.name,ini:p.ini,time:p.time,text:p.text,likes:p.likes,comments:p.comments,liked:p.liked,thread:p.thread||[]}))))}catch(e){}
+  if(!['student','school','employer'].includes(selectedRole)) return;
+  try{localStorage.setItem(roleFeedKey(selectedRole),JSON.stringify(POSTS.map(p=>({name:p.name,ini:p.ini,time:p.time,text:p.text,likes:p.likes,comments:p.comments,liked:p.liked,thread:p.thread||[]}))))}catch(e){}
 }
-function restoreFeed(){
+function restoreFeed(allowLegacy=false){
   try{
-    const raw=localStorage.getItem('internlink_feed_v1');
+    const raw=(['student','school','employer'].includes(selectedRole)?localStorage.getItem(roleFeedKey(selectedRole)):null)||(allowLegacy?localStorage.getItem('internlink_feed_v1'):null);
     if(!raw) return false;
     const arr=JSON.parse(raw);
     if(!Array.isArray(arr)||!arr.length) return false;
     POSTS.length=0;
     arr.forEach(p=>POSTS.push({likes:0,comments:0,liked:false,thread:[],time:'Just now',...p,img:null}));
+    if(allowLegacy) persistFeed();
     return true;
   }catch(e){return false}
 }
@@ -1962,6 +2107,7 @@ function handleRoleCardAction(type){
 
 class ScreenManager{
   show(name){
+    if((selectedRole||'student')!=='student'&&(name==='ojtLog'||name==='details')) name='applications';
     const screen=document.getElementById('screen-'+name);
     if(!screen) throw new Error('Unknown screen: '+name);
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1972,11 +2118,13 @@ class ScreenManager{
     const statusbar=document.getElementById('statusbar');
     if(name==='onboarding'||name==='loginOptions'){statusbar.classList.add('light');statusbar.classList.remove('dark')}
     else{statusbar.classList.remove('light');statusbar.classList.add('dark')}
-    if(name==='dashboard'){updateDashboardForRole();animateDashboard();renderDashCommunity();renderSetupNudge();requestAnimationFrame(()=>{try{initDashMap();updateDashMap()}catch(e){}})}
+    if(name==='dashboard'){updateDashboardForRole();animateDashboard();renderDashCommunity();renderSetupNudge();if((selectedRole||'student')==='student')requestAnimationFrame(()=>{try{initDashMap();updateDashMap()}catch(e){}})}
     if(name==='profile'){renderProfileStrength();applyProfileToUI()}
     if(name==='profileSetup'){prepProfileSetup()}
     if(name==='matches'){
       if((selectedRole||'student')==='student'){
+        const activeView=document.querySelector('#screen-matches .toggle-btn.active');
+        if(activeView) setView(activeView.dataset.view,activeView);
         mapRefit=true;
         requestAnimationFrame(()=>{renderMap(getFiltered());try{if(miniMap){miniMap.invalidateSize();miniMap.setView([userLocation.lat,userLocation.lng],miniMap.getZoom())}}catch(e){}});
       }else updateDashboardForRole();
@@ -2051,6 +2199,7 @@ function loginDemoJuan(){
 
 /* New account: blank slate through role → purpose → profile setup. Nothing from login is kept. */
 function startNewAccount(mode){
+  try{localStorage.removeItem(ACTIVE_ROLE_KEY)}catch(e){}
   selectedRole=null;
   selectedPurpose=[];
   profileSetup={name:'',school:'',dept:'any',program:'',year:'',location:'',bio:'',skills:'',photo:'',docs:{resume:null,portfolio:null,endorsement:null},done:false,dismissed:false};
@@ -2109,11 +2258,12 @@ class InternLinkApp{
 
   init(){
     try{
-      if(localStorage.getItem('internlink_theme')==='dark'){
-        document.getElementById('phone').classList.add('dark');
-        const sw=document.getElementById('profileThemeSwitch');
-        if(sw) sw.classList.add('on');
+      let themeRole=localStorage.getItem(ACTIVE_ROLE_KEY);
+      if(!['student','school','employer'].includes(themeRole)){
+        const legacy=JSON.parse(localStorage.getItem('internlink_state_v2')||'null');
+        themeRole=legacy?.selectedRole;
       }
+      if(['student','school','employer'].includes(themeRole)) applyRoleTheme(themeRole);
     }catch(e){}
     document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();internLinkApp.auth.continueWithCredentials(document.getElementById('loginEmail').value.trim(),document.getElementById('loginPass').value)});
     document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showScreen(b.dataset.nav)));
@@ -2123,7 +2273,7 @@ class InternLinkApp{
     const hasState=loadState();
     syncMapControls();
     applyFilters();
-    renderFeed();renderDashCommunity();
+    renderApplications();renderMessages();renderNotifications();renderFeed();renderDashCommunity();
     applyProfileToUI();renderProfileStrength();
     if(hasState&&selectedRole){
       const cfg=PURPOSE_OPTIONS[selectedRole];
@@ -2146,7 +2296,7 @@ function toggleTheme(){
   const dark=phone.classList.toggle('dark');
   const sw=document.getElementById('profileThemeSwitch');
   if(sw) sw.classList.toggle('on',dark);
-  try{localStorage.setItem('internlink_theme',dark?'dark':'light')}catch(e){}
+  try{if(['student','school','employer'].includes(selectedRole))localStorage.setItem(roleThemeKey(selectedRole),dark?'dark':'light')}catch(e){}
   showToast(dark?'Dark mode on':'Light mode on','info');
 }
 
